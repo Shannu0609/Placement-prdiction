@@ -1,0 +1,11 @@
+{
+  "name": "placement-intelligence-system",
+  "version": "1.0.0",
+  "description": "AI-powered student placement prediction platform with ML, salary prediction, career recommendations, and skill-gap analysis.",
+  "main": "wsgi.py",
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build",
+    "start": "gunicorn wsgi:app"
+  },
+  "dependencies": {}
+}

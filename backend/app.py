@@ -1,24 +1,53 @@
 import os
+import sys
 import joblib
 import numpy as np
 import pandas as pd
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from datetime import datetime, timedelta
 
-app = Flask(__name__)
+# Locate frontend dist directory for single website production serving
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(CURRENT_DIR)
+FRONTEND_DIST = os.path.join(ROOT_DIR, 'frontend', 'dist')
+
+if not os.path.exists(FRONTEND_DIST):
+    FRONTEND_DIST = os.path.join(CURRENT_DIR, 'static')
+
+app = Flask(__name__, static_folder=FRONTEND_DIST, static_url_path='')
 CORS(app)
 
-# Ensure models are loaded
-MODEL_DIR = os.path.join(os.path.dirname(__file__), 'models')
-P_MODEL_PATH = os.path.join(MODEL_DIR, 'placement_model.pkl')
-S_MODEL_PATH = os.path.join(MODEL_DIR, 'salary_model.pkl')
+# Ensure ML models are loaded from available paths or generated on startup
+MODEL_DIRS = [
+    os.path.join(CURRENT_DIR, 'models'),
+    os.path.join(ROOT_DIR, 'models'),
+    os.path.join(CURRENT_DIR, '..', 'models')
+]
 
-if not os.path.exists(P_MODEL_PATH) or not os.path.exists(S_MODEL_PATH):
-    from generate_data import train as gen_data
-    from train_models import train as train_models
+P_MODEL_PATH = None
+S_MODEL_PATH = None
+
+for m_dir in MODEL_DIRS:
+    p_path = os.path.join(m_dir, 'placement_model.pkl')
+    s_path = os.path.join(m_dir, 'salary_model.pkl')
+    if os.path.exists(p_path) and os.path.exists(s_path):
+        P_MODEL_PATH = p_path
+        S_MODEL_PATH = s_path
+        break
+
+if not P_MODEL_PATH or not S_MODEL_PATH:
+    sys.path.append(CURRENT_DIR)
+    try:
+        from generate_data import train as gen_data
+        from train_models import train as train_models
+    except ImportError:
+        from backend.generate_data import train as gen_data
+        from backend.train_models import train as train_models
     gen_data()
     train_models()
+    P_MODEL_PATH = os.path.join(CURRENT_DIR, 'models', 'placement_model.pkl')
+    S_MODEL_PATH = os.path.join(CURRENT_DIR, 'models', 'salary_model.pkl')
 
 placement_model = joblib.load(P_MODEL_PATH)
 salary_model = joblib.load(S_MODEL_PATH)
@@ -127,25 +156,21 @@ def predict_placement():
     projects = int(data.get('projects_count', 2))
     certs = int(data.get('certifications_count', 1))
     internship = 1 if data.get('internship') in [True, 1, '1', 'Yes'] else 0
-    skills = data.get('skills', [])
 
     features = [[cgpa, coding, comm, aptitude, projects, certs, internship]]
     
-    # Calculate probability
     prob_arr = placement_model.predict_proba(features)[0]
     prob_percentage = round(float(prob_arr[1]) * 100, 1)
 
-    # Classification Category logic as per requirements:
-    # Above 75% = High Chance, 50%-75% = Medium Chance, Below 50% = Low Chance
     if prob_percentage >= 75.0:
         category = "High Chance"
-        category_color = "#22C55E" # Accent Green
+        category_color = "#22C55E"
     elif prob_percentage >= 50.0:
         category = "Medium Chance"
-        category_color = "#F59E0B" # Warning Orange
+        category_color = "#F59E0B"
     else:
         category = "Low Chance"
-        category_color = "#EF4444" # Danger Red
+        category_color = "#EF4444"
 
     return jsonify({
         "status": "success",
@@ -263,13 +288,11 @@ def skill_analysis():
     projects = int(data.get('projects_count', 2))
     certs = int(data.get('certifications_count', 1))
     internship = 1 if data.get('internship') in [True, 1, '1', 'Yes'] else 0
-    skills = data.get('skills', [])
 
     strengths = []
     weaknesses = []
     recommendations = []
 
-    # Academic & Score Checks
     if cgpa >= 8.0:
         strengths.append(f"Strong Academic Foundation (CGPA: {cgpa}/10)")
     else:
@@ -280,13 +303,13 @@ def skill_analysis():
         strengths.append(f"Excellent Coding & Logic Skills ({coding}/100)")
     else:
         weaknesses.append(f"Coding Score needs strengthening (Current: {coding}/100)")
-        recommendations.append("Practice Data Structures & Algorithms on LeetCode/HackerRank daily (aim for 2+ problems/day).")
+        recommendations.append("Practice Data Structures & Algorithms daily on LeetCode / HackerRank.")
 
     if comm >= 75:
         strengths.append(f"Strong Communication & Articulation ({comm}/100)")
     else:
         weaknesses.append(f"Communication Skills need practice (Current: {comm}/100)")
-        recommendations.append("Participate in mock HR interviews and group discussions to boost confidence and fluency.")
+        recommendations.append("Participate in mock HR interviews and group discussions to boost fluency.")
 
     if aptitude >= 75:
         strengths.append(f"High Quantitative & Problem-Solving Aptitude ({aptitude}/100)")
@@ -298,7 +321,7 @@ def skill_analysis():
         strengths.append(f"Solid Hands-on Portfolio ({projects} Projects)")
     else:
         weaknesses.append(f"Limited Project Portfolio ({projects} Project)")
-        recommendations.append("Build 1-2 Full-Stack or AI application projects with live deployed URLs and clean GitHub code.")
+        recommendations.append("Build 1-2 Full-Stack or AI application projects with live URLs.")
 
     if certs >= 2:
         strengths.append(f"Recognized Industry Certifications ({certs} Certifications)")
@@ -310,9 +333,8 @@ def skill_analysis():
         strengths.append("Direct Industry Internship Experience")
     else:
         weaknesses.append("No Industrial Internship Experience")
-        recommendations.append("Apply for virtual internships or open-source programs (like GSoC or Hackathons) to showcase real exposure.")
+        recommendations.append("Apply for virtual internships or open-source hackathons to showcase real exposure.")
 
-    # Skill Radar chart data normalized (0-100)
     radar_data = [
         {"subject": "Academics", "score": min(100, int(cgpa * 10))},
         {"subject": "Coding", "score": int(coding)},
@@ -369,8 +391,6 @@ def delete_history_item(pred_id):
 def login():
     data = request.json or {}
     email = data.get('email', '')
-    password = data.get('password', '')
-
     user = next((u for u in users_db if u['email'] == email), None)
     if not user:
         user = {
@@ -417,7 +437,6 @@ def admin_stats():
     total_students = len(users_db) + 185
     avg_prob = round(sum(p['probability'] for p in prediction_history) / len(prediction_history), 1) if prediction_history else 78.4
     
-    # Trends, Salary Distribution, Popular Skills
     placement_trends = [
         {"month": "Jan", "placed": 65, "rate": 78},
         {"month": "Feb", "placed": 78, "rate": 82},
@@ -458,6 +477,28 @@ def admin_stats():
     })
 
 
+# Static assets & SPA Catch-All Routing Handler
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_frontend(path):
+    if path.startswith('api/'):
+        return jsonify({"error": "API route not found"}), 404
+    
+    target_file = os.path.join(app.static_folder, path)
+    if path != "" and os.path.exists(target_file):
+        return send_from_directory(app.static_folder, path)
+    else:
+        index_file = os.path.join(app.static_folder, 'index.html')
+        if os.path.exists(index_file):
+            return send_from_directory(app.static_folder, 'index.html')
+        return jsonify({
+            "status": "online",
+            "system": "Placement Intelligence API",
+            "message": "Flask server running. React frontend static build not detected."
+        })
+
+
 if __name__ == '__main__':
-    print("Starting Placement Intelligence Flask Server on port 5000...")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    print(f"Starting Placement Intelligence Flask Server on port {port}...")
+    app.run(host='0.0.0.0', port=port, debug=False)

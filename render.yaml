@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: placement-intelligence-system
+    env: python
+    buildCommand: "cd frontend && npm install && npm run build && cd .. && pip install -r requirements.txt && python backend/generate_data.py && python backend/train_models.py"
+    startCommand: "gunicorn wsgi:app"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
