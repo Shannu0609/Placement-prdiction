@@ -1,0 +1,28 @@
+# Node dependencies & build artifacts
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+.vite/
+
+# Python cache & virtual environment
+__pycache__/
+backend/__pycache__/
+api/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+ENV/
+env/
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+.env.local
