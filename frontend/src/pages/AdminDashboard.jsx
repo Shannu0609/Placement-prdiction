@@ -1,135 +1,192 @@
-import React, { useState, useEffect } from 'react';
-import { fetchAdminStats } from '../utils/api';
-import { ShieldCheck, Users, Sparkles, TrendingUp, Award, BarChart3, PieChart, Activity, User, Calendar } from 'lucide-react';
+import React, { useState } from 'react';
+import { 
+  ShieldCheck, Users, Building2, Briefcase, Award, TrendingUp, 
+  BarChart3, PieChart, CheckCircle2, XCircle, Search, Filter, Check, Layers
+} from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area } from 'recharts';
+import { useAuth } from '../context/AuthContext';
 
-const AdminDashboard = () => {
-  const [stats, setStats] = useState(null);
+export default function AdminDashboard() {
+  const { jobs, applications } = useAuth();
+
   const [activeTab, setActiveTab] = useState('overview');
 
-  useEffect(() => {
-    loadStats();
-  }, []);
+  // Pending Company Approval Requests list
+  const [companyApprovals, setCompanyApprovals] = useState([
+    {
+      id: "cmp_pending_1",
+      companyName: "Innovate AI Corp",
+      hrName: "Sanjay Patel",
+      hrEmail: "sanjay@innovateai.io",
+      industry: "Artificial Intelligence & Cloud",
+      website: "https://innovateai.io",
+      status: "pending",
+      requestedAt: "2026-08-26"
+    },
+    {
+      id: "cmp_pending_2",
+      companyName: "NextGen CyberSec",
+      hrName: "Elena Rostova",
+      hrEmail: "elena@nextgencyber.com",
+      industry: "Cybersecurity & Defense",
+      website: "https://nextgencyber.com",
+      status: "pending",
+      requestedAt: "2026-08-25"
+    }
+  ]);
 
-  const loadStats = async () => {
-    const data = await fetchAdminStats();
-    setStats(data);
+  const [approvedCompanies, setApprovedCompanies] = useState([
+    { id: "cmp_301", companyName: "TechCorp Global", hrName: "Priya Sundaram", industry: "Software", isVerified: true },
+    { id: "cmp_302", companyName: "DataMetrics AI", hrName: "Rohan Verma", industry: "Data Analytics", isVerified: true },
+    { id: "cmp_303", companyName: "CloudScale Systems", hrName: "Anita Roy", industry: "Cloud Infrastructure", isVerified: true }
+  ]);
+
+  const handleApproveCompany = (companyId) => {
+    const target = companyApprovals.find(c => c.id === companyId);
+    if (!target) return;
+
+    setCompanyApprovals(prev => prev.filter(c => c.id !== companyId));
+    setApprovedCompanies(prev => [...prev, { ...target, isVerified: true }]);
+    alert(`${target.companyName} has been officially approved & verified for campus recruitment!`);
   };
 
-  if (!stats) {
-    return (
-      <div className="text-center py-20">
-        <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-        <p className="text-sm text-gray-500">Loading Placement Analytics...</p>
-      </div>
-    );
-  }
+  const handleRejectCompany = (companyId) => {
+    setCompanyApprovals(prev => prev.filter(c => c.id !== companyId));
+  };
+
+  // Analytics datasets
+  const placementTrends = [
+    { month: "Jan", rate: 78 },
+    { month: "Feb", rate: 82 },
+    { month: "Mar", rate: 85 },
+    { month: "Apr", rate: 89 },
+    { month: "May", rate: 92 },
+    { month: "Jun", rate: 94 }
+  ];
+
+  const salaryDistribution = [
+    { range: "3-5 LPA", count: 28 },
+    { range: "5-8 LPA", count: 54 },
+    { range: "8-12 LPA", count: 32 },
+    { range: "12-16 LPA", count: 18 },
+    { range: "16+ LPA", count: 8 }
+  ];
+
+  const popularSkills = [
+    { skill: "Python", demand: 92 },
+    { skill: "Data Structures", demand: 88 },
+    { skill: "React.js", demand: 84 },
+    { skill: "SQL & Databases", demand: 80 },
+    { skill: "Java / Spring", demand: 76 },
+    { skill: "Machine Learning", demand: 72 }
+  ];
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 py-4">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 glass-card rounded-3xl p-6 border border-amber-500/30 shadow-xl bg-gradient-to-r from-amber-500/10 via-blue-600/10 to-transparent">
-        <div className="space-y-1">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 text-xs font-semibold">
-            <ShieldCheck className="w-4 h-4 text-amber-500" />
-            <span>Administrative Control & Analytics Center</span>
+    <div className="space-y-6">
+      
+      {/* Top Banner */}
+      <div className="p-6 rounded-3xl bg-gradient-to-r from-amber-900 via-amber-950 to-slate-900 text-white shadow-xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl"></div>
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-semibold mb-3 border border-amber-400/20">
+              <ShieldCheck className="w-3.5 h-3.5 text-amber-300" />
+              <span>Institutional Placement Directorate</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Admin System Ecosystem</h1>
+            <p className="text-amber-200 text-xs sm:text-sm mt-1 max-w-xl">
+              Oversee multi-role users, approve corporate registrations, monitor campus drive applications, and analyze institutional placement trends.
+            </p>
           </div>
-          <h1 className="text-3xl font-black text-gray-900 dark:text-white">
-            Placement Intelligence Admin Portal
-          </h1>
-          <p className="text-xs text-gray-500 dark:text-slate-400">
-            Institutional overview of dataset training, student predictions, and job market trends.
-          </p>
-        </div>
 
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-              activeTab === 'overview'
-                ? 'bg-amber-500 text-white shadow-lg'
-                : 'glass-card text-gray-600 dark:text-slate-300'
-            }`}
-          >
-            Analytics Charts
-          </button>
-          <button
-            onClick={() => setActiveTab('users')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-              activeTab === 'users'
-                ? 'bg-amber-500 text-white shadow-lg'
-                : 'glass-card text-gray-600 dark:text-slate-300'
-            }`}
-          >
-            Users & Logs
-          </button>
+          <div className="flex items-center space-x-2 shrink-0">
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                activeTab === 'overview' ? 'bg-amber-500 text-white shadow-lg' : 'bg-white/10 text-amber-200 hover:bg-white/20'
+              }`}
+            >
+              Analytics Suite
+            </button>
+            <button
+              onClick={() => setActiveTab('approvals')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                activeTab === 'approvals' ? 'bg-amber-500 text-white shadow-lg' : 'bg-white/10 text-amber-200 hover:bg-white/20'
+              }`}
+            >
+              Company Approvals ({companyApprovals.length})
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Top 4 KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="glass-card rounded-3xl p-6 space-y-3">
+      {/* Admin KPI Cards Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="glass-card p-5 rounded-3xl border border-gray-200 dark:border-slate-800 space-y-2">
           <div className="flex justify-between items-center text-xs font-bold text-gray-400">
-            <span>TOTAL REGISTERED STUDENTS</span>
-            <Users className="w-5 h-5 text-blue-500" />
+            <span>TOTAL STUDENTS</span>
+            <Users className="w-4 h-4 text-blue-500" />
           </div>
-          <div className="text-3xl font-black text-gray-900 dark:text-white">
-            {stats.total_students}
-          </div>
-          <span className="text-[11px] text-emerald-500 font-semibold">↑ +14% this month</span>
+          <div className="text-2xl font-black text-gray-900 dark:text-white">185</div>
+          <span className="text-[10px] text-emerald-500 font-semibold">Active CSE/ECE Batches</span>
         </div>
 
-        <div className="glass-card rounded-3xl p-6 space-y-3">
+        <div className="glass-card p-5 rounded-3xl border border-gray-200 dark:border-slate-800 space-y-2">
           <div className="flex justify-between items-center text-xs font-bold text-gray-400">
-            <span>TOTAL PREDICTIONS RUN</span>
-            <Sparkles className="w-5 h-5 text-emerald-500" />
+            <span>TRAINERS</span>
+            <Award className="w-4 h-4 text-purple-500" />
           </div>
-          <div className="text-3xl font-black text-gray-900 dark:text-white">
-            {stats.total_predictions}
-          </div>
-          <span className="text-[11px] text-blue-500 font-semibold">Random Forest Engine</span>
+          <div className="text-2xl font-black text-gray-900 dark:text-white">12</div>
+          <span className="text-[10px] text-purple-500 font-semibold">Placement Mentors</span>
         </div>
 
-        <div className="glass-card rounded-3xl p-6 space-y-3">
+        <div className="glass-card p-5 rounded-3xl border border-gray-200 dark:border-slate-800 space-y-2">
           <div className="flex justify-between items-center text-xs font-bold text-gray-400">
-            <span>AVERAGE PLACEMENT PROBABILITY</span>
-            <TrendingUp className="w-5 h-5 text-indigo-500" />
+            <span>COMPANIES</span>
+            <Building2 className="w-4 h-4 text-emerald-500" />
           </div>
-          <div className="text-3xl font-black text-indigo-600 dark:text-indigo-400">
-            {stats.avg_placement_score}%
-          </div>
-          <span className="text-[11px] text-emerald-500 font-semibold">High Institutional Average</span>
+          <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{approvedCompanies.length}</div>
+          <span className="text-[10px] text-emerald-500 font-semibold">Verified Corporate HR</span>
         </div>
 
-        <div className="glass-card rounded-3xl p-6 space-y-3">
+        <div className="glass-card p-5 rounded-3xl border border-gray-200 dark:border-slate-800 space-y-2">
           <div className="flex justify-between items-center text-xs font-bold text-gray-400">
-            <span>TOP RECOMMENDED ROLE</span>
-            <Award className="w-5 h-5 text-amber-500" />
+            <span>ACTIVE JOBS</span>
+            <Briefcase className="w-4 h-4 text-amber-500" />
           </div>
-          <div className="text-xl font-extrabold text-amber-600 dark:text-amber-400 truncate">
-            {stats.top_career_recommendation}
+          <div className="text-2xl font-black text-amber-600 dark:text-amber-400">{jobs.length}</div>
+          <span className="text-[10px] text-amber-500 font-semibold">Live Campus Postings</span>
+        </div>
+
+        <div className="glass-card p-5 rounded-3xl border border-gray-200 dark:border-slate-800 space-y-2">
+          <div className="flex justify-between items-center text-xs font-bold text-gray-400">
+            <span>APPLICATIONS</span>
+            <TrendingUp className="w-4 h-4 text-indigo-500" />
           </div>
-          <span className="text-[11px] text-gray-400">High Industry Demand</span>
+          <div className="text-2xl font-black text-indigo-600 dark:text-indigo-400">{applications.length + 142}</div>
+          <span className="text-[10px] text-indigo-500 font-semibold">Submitted Drive Apps</span>
         </div>
       </div>
 
       {activeTab === 'overview' ? (
-        <>
-          {/* Charts Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Chart 1: Placement Trends */}
-            <div className="glass-card rounded-3xl p-6 space-y-4">
+        <div className="space-y-6">
+          
+          {/* Placement Trends & Salary Distribution Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            {/* Chart 1: Placement Rate Trends */}
+            <div className="glass-card p-6 rounded-3xl border border-gray-200 dark:border-slate-800 space-y-4">
               <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="text-lg font-extrabold text-gray-900 dark:text-white">Placement Rate Trends</h3>
-                  <p className="text-xs text-gray-500">Monthly student placement success rate (%)</p>
+                  <h3 className="text-sm font-bold text-gray-900 dark:text-white">Placement Rate Trends (%)</h3>
+                  <p className="text-xs text-gray-500">Monthly student placement success rate progression</p>
                 </div>
-                <BarChart3 className="w-5 h-5 text-blue-500" />
+                <BarChart3 className="w-4 h-4 text-amber-500" />
               </div>
 
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={stats.placement_trends}>
+                  <AreaChart data={placementTrends}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.2} />
                     <XAxis dataKey="month" stroke="#94a3b8" tick={{ fontSize: 12 }} />
                     <YAxis stroke="#94a3b8" tick={{ fontSize: 12 }} domain={[50, 100]} />
@@ -141,25 +198,25 @@ const AdminDashboard = () => {
                         color: '#fff'
                       }}
                     />
-                    <Area type="monotone" dataKey="rate" stroke="#2563eb" fill="#3b82f6" fillOpacity={0.3} />
+                    <Area type="monotone" dataKey="rate" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.3} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
             </div>
 
-            {/* Chart 2: Salary Distribution Bins */}
-            <div className="glass-card rounded-3xl p-6 space-y-4">
+            {/* Chart 2: Salary Package Distribution */}
+            <div className="glass-card p-6 rounded-3xl border border-gray-200 dark:border-slate-800 space-y-4">
               <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="text-lg font-extrabold text-gray-900 dark:text-white">Salary Package Distribution</h3>
-                  <p className="text-xs text-gray-500">Distribution of candidate CTC offers in LPA</p>
+                  <h3 className="text-sm font-bold text-gray-900 dark:text-white">Salary Package Bins (LPA)</h3>
+                  <p className="text-xs text-gray-500">Distribution of candidate CTC offers</p>
                 </div>
-                <PieChart className="w-5 h-5 text-emerald-500" />
+                <PieChart className="w-4 h-4 text-emerald-500" />
               </div>
 
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={stats.salary_distribution}>
+                  <BarChart data={salaryDistribution}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.2} />
                     <XAxis dataKey="range" stroke="#94a3b8" tick={{ fontSize: 12 }} />
                     <YAxis stroke="#94a3b8" tick={{ fontSize: 12 }} />
@@ -171,26 +228,27 @@ const AdminDashboard = () => {
                         color: '#fff'
                       }}
                     />
-                    <Bar dataKey="count" fill="#22c55e" radius={[8, 8, 0, 0]} />
+                    <Bar dataKey="count" fill="#10b981" radius={[8, 8, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             </div>
+
           </div>
 
-          {/* Popular Skills Bar Chart */}
-          <div className="glass-card rounded-3xl p-6 space-y-4">
-            <h3 className="text-lg font-extrabold text-gray-900 dark:text-white">Most Popular Student Skills & Demand</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {stats.popular_skills.map((sk, idx) => (
-                <div key={idx} className="p-4 rounded-2xl bg-white/60 dark:bg-slate-800/60 border border-gray-100 dark:border-slate-700 space-y-2">
+          {/* Skill Demand Bar Cards */}
+          <div className="glass-card p-6 rounded-3xl border border-gray-200 dark:border-slate-800 space-y-4">
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white">Skill Demand Analysis across Recruiting Companies</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {popularSkills.map((sk, idx) => (
+                <div key={idx} className="p-3.5 rounded-2xl bg-white/60 dark:bg-slate-800/60 border border-gray-100 dark:border-slate-700 space-y-2">
                   <div className="flex justify-between text-xs font-bold">
                     <span className="text-gray-800 dark:text-slate-200">{sk.skill}</span>
-                    <span className="text-blue-600 dark:text-blue-400">{sk.demand}% Demand</span>
+                    <span className="text-amber-600 dark:text-amber-400">{sk.demand}% Corporate Demand</span>
                   </div>
                   <div className="w-full bg-gray-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
                     <div
-                      className="bg-blue-600 h-full rounded-full"
+                      className="bg-amber-500 h-full rounded-full"
                       style={{ width: `${sk.demand}%` }}
                     ></div>
                   </div>
@@ -198,43 +256,51 @@ const AdminDashboard = () => {
               ))}
             </div>
           </div>
-        </>
+
+        </div>
       ) : (
-        /* Users & Logs Table */
+        /* Approvals & Company Management Tab */
         <div className="space-y-6">
-          <div className="glass-card rounded-3xl p-6 space-y-4">
-            <h3 className="text-lg font-extrabold text-gray-900 dark:text-white">Registered Students Database</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-gray-700 dark:text-slate-300">
-                <thead className="bg-gray-100 dark:bg-slate-800 uppercase text-gray-400 font-extrabold">
-                  <tr>
-                    <th className="p-3">ID</th>
-                    <th className="p-3">Student Name</th>
-                    <th className="p-3">Email</th>
-                    <th className="p-3">College</th>
-                    <th className="p-3">Branch</th>
-                    <th className="p-3">Year</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
-                  {stats.registered_users.map((usr) => (
-                    <tr key={usr.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/40">
-                      <td className="p-3 font-mono text-gray-400">{usr.id}</td>
-                      <td className="p-3 font-bold text-gray-900 dark:text-white">{usr.name}</td>
-                      <td className="p-3">{usr.email}</td>
-                      <td className="p-3">{usr.college}</td>
-                      <td className="p-3">{usr.branch}</td>
-                      <td className="p-3 font-semibold text-blue-600">{usr.year}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          <div className="glass-card p-6 rounded-3xl border border-gray-200 dark:border-slate-800 space-y-4">
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center space-x-2">
+              <Building2 className="w-4 h-4 text-amber-500" />
+              <span>Pending Company Verification Approvals</span>
+            </h3>
+
+            {companyApprovals.length === 0 ? (
+              <p className="text-xs text-gray-400 py-4">No pending company registrations at this time.</p>
+            ) : (
+              <div className="space-y-3">
+                {companyApprovals.map((cmp) => (
+                  <div key={cmp.id} className="p-4 rounded-2xl border border-amber-200 dark:border-amber-900/40 bg-amber-50/50 dark:bg-amber-950/20 flex items-center justify-between">
+                    <div>
+                      <h4 className="text-xs font-bold text-gray-900 dark:text-white">{cmp.companyName}</h4>
+                      <p className="text-[11px] text-gray-500 dark:text-slate-400">HR Contact: {cmp.hrName} ({cmp.hrEmail}) • {cmp.industry}</p>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleRejectCompany(cmp.id)}
+                        className="px-3 py-1.5 rounded-xl bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300 text-xs font-semibold"
+                      >
+                        Reject
+                      </button>
+                      <button
+                        onClick={() => handleApproveCompany(cmp.id)}
+                        className="px-4 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-bold shadow-md flex items-center space-x-1"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                        <span>Approve HR</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
+
     </div>
   );
-};
-
-export default AdminDashboard;
+}

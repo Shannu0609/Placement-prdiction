@@ -7,28 +7,42 @@ import Footer from './components/Footer';
 // Pages
 import LandingPage from './pages/LandingPage';
 import StudentDashboard from './pages/StudentDashboard';
+import AtsCheckerPage from './pages/AtsCheckerPage';
 import PredictPage from './pages/PredictPage';
 import ResultPage from './pages/ResultPage';
 import SkillGapPage from './pages/SkillGapPage';
 import CareerRecommendPage from './pages/CareerRecommendPage';
 import HistoryPage from './pages/HistoryPage';
 import ProfilePage from './pages/ProfilePage';
+import JobsPage from './pages/JobsPage';
+import TrainerDashboard from './pages/TrainerDashboard';
+import CompanyDashboard from './pages/CompanyDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 
 function MainApp() {
   const [activeTab, setActiveTab] = useState('landing');
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, activeRole } = useAuth();
 
-  const showSidebar = isAuthenticated && ['dashboard', 'predict', 'result', 'skill', 'career', 'history', 'profile', 'admin'].includes(activeTab);
+  const showSidebar = isAuthenticated && [
+    'dashboard', 'ats_checker', 'predict', 'result', 'skill', 'career', 
+    'history', 'profile', 'jobs',
+    'trainer_dashboard', 'trainer_students', 'trainer_announcements', 'trainer_feedback',
+    'company_dashboard', 'company_candidates', 'company_jobs', 'company_emails',
+    'admin', 'admin_approvals', 'admin_users', 'admin_analytics'
+  ].includes(activeTab);
 
   const renderContent = () => {
     switch (activeTab) {
       case 'landing':
         return <LandingPage setActiveTab={setActiveTab} />;
+      
+      // Student Routes
       case 'dashboard':
         return <StudentDashboard setActiveTab={setActiveTab} />;
+      case 'ats_checker':
+        return <AtsCheckerPage setActiveTab={setActiveTab} />;
       case 'predict':
         return <PredictPage setActiveTab={setActiveTab} />;
       case 'result':
@@ -41,12 +55,36 @@ function MainApp() {
         return <HistoryPage setActiveTab={setActiveTab} />;
       case 'profile':
         return <ProfilePage setActiveTab={setActiveTab} />;
+      case 'jobs':
+        return <JobsPage setActiveTab={setActiveTab} />;
+
+      // Trainer Routes
+      case 'trainer_dashboard':
+      case 'trainer_students':
+      case 'trainer_announcements':
+      case 'trainer_feedback':
+        return <TrainerDashboard />;
+
+      // Company Routes
+      case 'company_dashboard':
+      case 'company_candidates':
+      case 'company_jobs':
+      case 'company_emails':
+        return <CompanyDashboard />;
+
+      // Admin Routes
       case 'admin':
+      case 'admin_approvals':
+      case 'admin_users':
+      case 'admin_analytics':
         return <AdminDashboard />;
+
+      // Auth Routes
       case 'login':
         return <LoginPage setActiveTab={setActiveTab} />;
       case 'register':
         return <RegisterPage setActiveTab={setActiveTab} />;
+      
       default:
         return <LandingPage setActiveTab={setActiveTab} />;
     }

@@ -1,0 +1,69 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions for Role-Based Access Control (RBAC)
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isRole(role) {
+      return isSignedIn() && (
+        request.auth.token.role == role || 
+        getUserData().role == role
+      );
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isOwner(userId) || isRole('admin');
+    }
+
+    // Student Profiles
+    match /student_profiles/{studentId} {
+      allow read: if isSignedIn();
+      allow write: if isOwner(studentId) || isRole('admin') || isRole('trainer');
+    }
+
+    // Company Profiles
+    match /company_profiles/{companyId} {
+      allow read: if isSignedIn();
+      allow create, update: if isOwner(companyId) || isRole('admin');
+      allow delete: if isRole('admin');
+    }
+
+    // Jobs Postings
+    match /jobs/{jobId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isRole('company') || isRole('admin');
+    }
+
+    // Job Applications
+    match /applications/{applicationId} {
+      allow read: if isSignedIn();
+      allow create: if isRole('student');
+      allow update, delete: if isRole('company') || isRole('admin') || isRole('student');
+    }
+
+    // Announcements
+    match /announcements/{announcementId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isRole('trainer') || isRole('admin');
+    }
+
+    // Trainer Feedback
+    match /trainer_feedback/{feedbackId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isRole('trainer') || isRole('admin');
+    }
+  }
+}
