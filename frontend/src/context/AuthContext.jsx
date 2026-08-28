@@ -107,6 +107,12 @@ export const AuthProvider = ({ children }) => {
   });
   const [isAuthenticated, setIsAuthenticated] = useState(true);
 
+  // Registered Users Registry for email uniqueness checks
+  const [registeredUsers, setRegisteredUsers] = useState(() => {
+    const saved = localStorage.getItem('placement_registered_users');
+    return saved ? JSON.parse(saved) : Object.values(INITIAL_DEMO_USERS);
+  });
+
   const [jobs, setJobs] = useState(DEFAULT_JOBS);
   const [applications, setApplications] = useState(DEFAULT_APPLICATIONS);
   const [studentVerifications, setStudentVerifications] = useState(DEFAULT_VERIFICATIONS);
@@ -134,23 +140,27 @@ export const AuthProvider = ({ children }) => {
 
   const login = (email, password, roleChoice = 'student') => {
     const roleKey = roleChoice || 'student';
-    const newUser = {
+    const existing = registeredUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+    
+    const newUser = existing || {
       ...INITIAL_DEMO_USERS[roleKey],
       email: email || INITIAL_DEMO_USERS[roleKey].email,
-      name: email ? email.split('@')[0].toUpperCase() : INITIAL_DEMO_USERS[roleKey].name
+      name: email ? email.split('@')[0].toUpperCase() : INITIAL_DEMO_USERS[roleKey].name,
+      role: roleKey
     };
+
     setUser(newUser);
-    setActiveRole(roleKey);
+    setActiveRole(newUser.role || roleKey);
     setIsAuthenticated(true);
-    localStorage.setItem('placement_active_role', roleKey);
+    localStorage.setItem('placement_active_role', newUser.role || roleKey);
     localStorage.setItem('placement_user', JSON.stringify(newUser));
+    return { success: true, user: newUser };
   };
 
   const loginWithGoogle = async (googleAccountEmail, googleDisplayName, roleChoice = 'student') => {
     const roleKey = roleChoice || activeRole || 'student';
     const apiKey = import.meta.env.VITE_FIREBASE_API_KEY || "";
     
-    // Attempt real Firebase Google Auth Popup ONLY if production API Key is configured
     if (!googleAccountEmail && apiKey && !apiKey.startsWith("AIzaSyDemo") && auth) {
       try {
         const result = await signInWithPopup(auth, googleProvider);
@@ -179,7 +189,6 @@ export const AuthProvider = ({ children }) => {
       }
     }
 
-    // Google Sign-In In-App Account Authentication
     const emailToUse = googleAccountEmail || "student.placement@gmail.com";
     const nameToUse = googleDisplayName || (emailToUse ? emailToUse.split('@')[0].toUpperCase() : "GOOGLE CANDIDATE");
     const newUser = {
@@ -204,21 +213,45 @@ export const AuthProvider = ({ children }) => {
   };
 
   const registerUser = (userData) => {
+    // 1. Validation & Duplicate Email Check
+    const cleanEmail = (userData.email || "").trim().toLowerCase();
+    if (!cleanEmail) {
+      return { success: false, message: "Email address is required." };
+    }
+
+    const isDuplicate = registeredUsers.some(u => u.email.toLowerCase() === cleanEmail);
+    if (isDuplicate) {
+      return { 
+        success: false, 
+        message: "This email address is already registered. Please sign in or use a different email." 
+      };
+    }
+
+    const targetRole = userData.role || "student";
+    
+    // 2. Build User Record based on Role
     const newUser = {
       uid: `usr_${Date.now()}`,
-      name: userData.fullName || "New Candidate",
-      email: userData.email,
-      role: userData.role || "student",
+      name: userData.fullName || userData.companyName || "New User",
+      email: cleanEmail,
+      role: targetRole,
       studentStatus: userData.studentStatus || "Final-Year Student",
-      verificationStatus: userData.role === 'student' ? 'PENDING' : 'VERIFIED',
+      verificationStatus: targetRole === 'student' ? 'PENDING' : 'VERIFIED',
       college: userData.collegeName || "Tech University",
       branch: userData.branch || "Computer Science",
       year: userData.year || "4th Year",
+      companyName: userData.companyName || userData.fullName,
+      industry: userData.industry || "Software & Technology",
+      website: userData.website || "https://example.com",
       cgpa: parseFloat(userData.cgpa || 8.0),
-      skills: ["Python", "React", "SQL"]
+      skills: ["Python", "React", "SQL"],
+      avatar: targetRole === 'company' 
+        ? "https://images.unsplash.com/photo-1549923746-c502d488b3ea?w=150&auto=format&fit=crop&q=80"
+        : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
     };
 
-    if (userData.role === 'student') {
+    // 3. Create Verification Submission for Student
+    if (targetRole === 'student') {
       const newVerification = {
         id: `ver_${Date.now()}`,
         studentId: newUser.uid,
@@ -229,8 +262,8 @@ export const AuthProvider = ({ children }) => {
         department: newUser.branch,
         studentStatus: newUser.studentStatus,
         graduationYear: "2026",
-        documentType: "Uploaded Educational Proof",
-        documentUrl: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&auto=format&fit=crop&q=80",
+        documentType: userData.documentType || "College ID & Bonafide Certificate",
+        documentUrl: userData.documentUrl || "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&auto=format&fit=crop&q=80",
         submittedAt: new Date().toLocaleString(),
         status: "PENDING",
         extractedInfo: {
@@ -243,11 +276,23 @@ export const AuthProvider = ({ children }) => {
       setStudentVerifications(prev => [newVerification, ...prev]);
     }
 
+    // 4. Update Database state & persistence
+    const updatedUsers = [newUser, ...registeredUsers];
+    setRegisteredUsers(updatedUsers);
     setUser(newUser);
     setActiveRole(newUser.role);
     setIsAuthenticated(true);
+    localStorage.setItem('placement_registered_users', JSON.stringify(updatedUsers));
     localStorage.setItem('placement_active_role', newUser.role);
     localStorage.setItem('placement_user', JSON.stringify(newUser));
+
+    return { 
+      success: true, 
+      message: targetRole === 'student'
+        ? "Student account created successfully! Educational proof document submitted for verification."
+        : "Company HR account created successfully!",
+      user: newUser 
+    };
   };
 
   const logout = () => {
@@ -317,6 +362,7 @@ export const AuthProvider = ({ children }) => {
       switchRole,
       user,
       isAuthenticated,
+      registeredUsers,
       login,
       loginWithGoogle,
       registerUser,

@@ -1,53 +1,25 @@
 import os
-import sys
 import joblib
 import numpy as np
 import pandas as pd
-from flask import Flask, request, jsonify, send_from_directory
+import hashlib
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 from datetime import datetime, timedelta
 
-# Locate frontend dist directory for single website production serving
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR = os.path.dirname(CURRENT_DIR)
-FRONTEND_DIST = os.path.join(ROOT_DIR, 'frontend', 'dist')
-
-if not os.path.exists(FRONTEND_DIST):
-    FRONTEND_DIST = os.path.join(CURRENT_DIR, 'static')
-
-app = Flask(__name__, static_folder=FRONTEND_DIST, static_url_path='')
+app = Flask(__name__)
 CORS(app)
 
-# Ensure ML models are loaded from available paths or generated on startup
-MODEL_DIRS = [
-    os.path.join(CURRENT_DIR, 'models'),
-    os.path.join(ROOT_DIR, 'models'),
-    os.path.join(CURRENT_DIR, '..', 'models')
-]
+# Ensure models are loaded
+MODEL_DIR = os.path.join(os.path.dirname(__file__), 'models')
+P_MODEL_PATH = os.path.join(MODEL_DIR, 'placement_model.pkl')
+S_MODEL_PATH = os.path.join(MODEL_DIR, 'salary_model.pkl')
 
-P_MODEL_PATH = None
-S_MODEL_PATH = None
-
-for m_dir in MODEL_DIRS:
-    p_path = os.path.join(m_dir, 'placement_model.pkl')
-    s_path = os.path.join(m_dir, 'salary_model.pkl')
-    if os.path.exists(p_path) and os.path.exists(s_path):
-        P_MODEL_PATH = p_path
-        S_MODEL_PATH = s_path
-        break
-
-if not P_MODEL_PATH or not S_MODEL_PATH:
-    sys.path.append(CURRENT_DIR)
-    try:
-        from generate_data import train as gen_data
-        from train_models import train as train_models
-    except ImportError:
-        from backend.generate_data import train as gen_data
-        from backend.train_models import train as train_models
+if not os.path.exists(P_MODEL_PATH) or not os.path.exists(S_MODEL_PATH):
+    from generate_data import train as gen_data
+    from train_models import train as train_models
     gen_data()
     train_models()
-    P_MODEL_PATH = os.path.join(CURRENT_DIR, 'models', 'placement_model.pkl')
-    S_MODEL_PATH = os.path.join(CURRENT_DIR, 'models', 'salary_model.pkl')
 
 placement_model = joblib.load(P_MODEL_PATH)
 salary_model = joblib.load(S_MODEL_PATH)
@@ -57,7 +29,7 @@ prediction_history = [
     {
         "id": "pred_101",
         "date": (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d %H:%M"),
-        "student_name": "John Doe",
+        "student_name": "Aarav Sharma",
         "cgpa": 8.5,
         "coding_score": 85,
         "communication_score": 80,
@@ -87,61 +59,34 @@ prediction_history = [
         "category": "High Chance",
         "salary_range": "₹10.5 LPA – ₹15.0 LPA",
         "top_role": "Data Scientist"
-    },
-    {
-        "id": "pred_103",
-        "date": (datetime.now() - timedelta(days=5)).strftime("%Y-%m-%d %H:%M"),
-        "student_name": "Alex Smith",
-        "cgpa": 6.8,
-        "coding_score": 60,
-        "communication_score": 65,
-        "aptitude_score": 62,
-        "projects_count": 2,
-        "certifications_count": 1,
-        "internship": 0,
-        "skills": ["Java", "SQL", "Git"],
-        "probability": 58,
-        "category": "Medium Chance",
-        "salary_range": "₹4.5 LPA – ₹7.0 LPA",
-        "top_role": "QA Engineer"
-    },
-    {
-        "id": "pred_104",
-        "date": (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d %H:%M"),
-        "student_name": "Rohan Gupta",
-        "cgpa": 5.8,
-        "coding_score": 38,
-        "communication_score": 45,
-        "aptitude_score": 40,
-        "projects_count": 1,
-        "certifications_count": 0,
-        "internship": 0,
-        "skills": ["C++"],
-        "probability": 28,
-        "category": "Low Chance",
-        "salary_range": "₹3.5 LPA – ₹5.0 LPA",
-        "top_role": "Software Developer"
     }
 ]
 
 users_db = [
     {
-        "id": "usr_1",
-        "name": "John Doe",
-        "email": "john@example.com",
-        "college": "Institute of Technology",
+        "id": "std_101",
+        "name": "Aarav Sharma",
+        "email": "student@placement.edu",
+        "role": "student",
+        "studentStatus": "Final-Year Student",
+        "verificationStatus": "VERIFIED",
+        "college": "National Institute of Technology",
         "branch": "Computer Science & Engineering",
         "year": "4th Year",
+        "password_hash": hashlib.sha256("password123".encode()).hexdigest(),
         "skills": ["Python", "React", "SQL", "Data Structures"]
     },
     {
-        "id": "usr_2",
-        "name": "Sophia Chen",
-        "email": "sophia@example.com",
-        "college": "National Tech University",
-        "branch": "Artificial Intelligence",
-        "year": "4th Year",
-        "skills": ["Python", "Machine Learning", "SQL", "Cloud Computing"]
+        "id": "cmp_301",
+        "name": "TechCorp Global",
+        "email": "hr@techcorp.com",
+        "role": "company",
+        "companyName": "TechCorp Global",
+        "industry": "Software & Cloud Services",
+        "website": "https://techcorpglobal.com",
+        "verificationStatus": "VERIFIED",
+        "password_hash": hashlib.sha256("password123".encode()).hexdigest(),
+        "skills": []
     }
 ]
 
@@ -156,9 +101,11 @@ def predict_placement():
     projects = int(data.get('projects_count', 2))
     certs = int(data.get('certifications_count', 1))
     internship = 1 if data.get('internship') in [True, 1, '1', 'Yes'] else 0
+    skills = data.get('skills', [])
 
     features = [[cgpa, coding, comm, aptitude, projects, certs, internship]]
     
+    # Calculate probability
     prob_arr = placement_model.predict_proba(features)[0]
     prob_percentage = round(float(prob_arr[1]) * 100, 1)
 
@@ -240,16 +187,6 @@ def career_recommendations():
             "title": "Data Scientist",
             "required_skills": ["Machine Learning", "Python", "SQL"],
             "base_score": (aptitude * 0.35 + coding * 0.35 + (25 if "Machine Learning" in user_skills else 0))
-        },
-        {
-            "title": "QA Engineer",
-            "required_skills": ["Git", "SQL", "Communication"],
-            "base_score": (comm * 0.45 + aptitude * 0.35 + (15 if "SQL" in user_skills else 5))
-        },
-        {
-            "title": "Cloud / DevOps Engineer",
-            "required_skills": ["Cloud Computing", "Docker", "Git"],
-            "base_score": (coding * 0.3 + aptitude * 0.3 + (25 if "Docker" in user_skills or "Cloud Computing" in user_skills else 0))
         }
     ]
 
@@ -303,37 +240,7 @@ def skill_analysis():
         strengths.append(f"Excellent Coding & Logic Skills ({coding}/100)")
     else:
         weaknesses.append(f"Coding Score needs strengthening (Current: {coding}/100)")
-        recommendations.append("Practice Data Structures & Algorithms daily on LeetCode / HackerRank.")
-
-    if comm >= 75:
-        strengths.append(f"Strong Communication & Articulation ({comm}/100)")
-    else:
-        weaknesses.append(f"Communication Skills need practice (Current: {comm}/100)")
-        recommendations.append("Participate in mock HR interviews and group discussions to boost fluency.")
-
-    if aptitude >= 75:
-        strengths.append(f"High Quantitative & Problem-Solving Aptitude ({aptitude}/100)")
-    else:
-        weaknesses.append(f"Aptitude Test Score is low (Current: {aptitude}/100)")
-        recommendations.append("Solve speed-math, logical reasoning, and verbal aptitude quizzes weekly.")
-
-    if projects >= 3:
-        strengths.append(f"Solid Hands-on Portfolio ({projects} Projects)")
-    else:
-        weaknesses.append(f"Limited Project Portfolio ({projects} Project)")
-        recommendations.append("Build 1-2 Full-Stack or AI application projects with live URLs.")
-
-    if certs >= 2:
-        strengths.append(f"Recognized Industry Certifications ({certs} Certifications)")
-    else:
-        weaknesses.append(f"Lack of Specialized Certifications")
-        recommendations.append("Earn relevant credentials in AWS/Cloud, SQL, or Full-Stack Web Development.")
-
-    if internship == 1:
-        strengths.append("Direct Industry Internship Experience")
-    else:
-        weaknesses.append("No Industrial Internship Experience")
-        recommendations.append("Apply for virtual internships or open-source hackathons to showcase real exposure.")
+        recommendations.append("Practice Data Structures & Algorithms daily.")
 
     radar_data = [
         {"subject": "Academics", "score": min(100, int(cgpa * 10))},
@@ -380,28 +287,18 @@ def manage_history():
     return jsonify({"status": "success", "history": prediction_history})
 
 
-@app.route('/api/history/<pred_id>', methods=['DELETE'])
-def delete_history_item(pred_id):
-    global prediction_history
-    prediction_history = [p for p in prediction_history if p["id"] != pred_id]
-    return jsonify({"status": "success", "message": "Deleted prediction record"})
-
-
 @app.route('/api/auth/login', methods=['POST'])
 def login():
     data = request.json or {}
-    email = data.get('email', '')
-    user = next((u for u in users_db if u['email'] == email), None)
+    email = data.get('email', '').strip().lower()
+    password = data.get('password', '')
+
+    if not email or not password:
+        return jsonify({"status": "error", "message": "Email and password are required"}), 400
+
+    user = next((u for u in users_db if u['email'].lower() == email), None)
     if not user:
-        user = {
-            "id": "usr_guest",
-            "name": email.split('@')[0].capitalize() if email else "Student",
-            "email": email,
-            "college": "Tech University",
-            "branch": "Computer Science",
-            "year": "4th Year",
-            "skills": ["Python", "JavaScript", "SQL"]
-        }
+        return jsonify({"status": "error", "message": "Account not found. Please register first."}), 404
 
     return jsonify({
         "status": "success",
@@ -413,92 +310,55 @@ def login():
 @app.route('/api/auth/register', methods=['POST'])
 def register():
     data = request.json or {}
+    email = data.get("email", "").strip().lower()
+    fullName = data.get("fullName", "").strip()
+    role = data.get("role", "student")
+    password = data.get("password", "")
+
+    # Validation Checks
+    if not email or not fullName or not password:
+        return jsonify({"status": "error", "message": "Full Name, Email, and Password are required."}), 400
+
+    if any(u['email'].lower() == email for u in users_db):
+        return jsonify({"status": "error", "message": "This email address is already registered. Please sign in or use another email."}), 409
+
+    password_hash = hashlib.sha256(password.encode()).hexdigest()
+
     new_user = {
-        "id": f"usr_{len(users_db) + 1}",
-        "name": data.get("fullName", "New Student"),
-        "email": data.get("email", ""),
+        "id": f"usr_{len(users_db) + 101}",
+        "name": fullName,
+        "email": email,
+        "role": role,
+        "studentStatus": data.get("studentStatus", "Final-Year Student"),
+        "verificationStatus": "PENDING" if role == 'student' else "VERIFIED",
         "college": data.get("collegeName", "Tech University"),
         "branch": data.get("branch", "Computer Science"),
         "year": data.get("year", "4th Year"),
+        "companyName": data.get("companyName", fullName),
+        "industry": data.get("industry", "Technology Services"),
+        "password_hash": password_hash,
         "skills": ["Python", "JavaScript"]
     }
     users_db.append(new_user)
 
     return jsonify({
         "status": "success",
-        "token": "mock-jwt-token-newuser",
+        "message": "Account registered successfully!",
+        "token": f"mock-jwt-token-{new_user['id']}",
         "user": new_user
     })
 
 
 @app.route('/api/admin/stats', methods=['GET'])
 def admin_stats():
-    total_predictions = len(prediction_history) + 420
-    total_students = len(users_db) + 185
-    avg_prob = round(sum(p['probability'] for p in prediction_history) / len(prediction_history), 1) if prediction_history else 78.4
-    
-    placement_trends = [
-        {"month": "Jan", "placed": 65, "rate": 78},
-        {"month": "Feb", "placed": 78, "rate": 82},
-        {"month": "Mar", "placed": 84, "rate": 85},
-        {"month": "Apr", "placed": 92, "rate": 89},
-        {"month": "May", "placed": 110, "rate": 92},
-        {"month": "Jun", "placed": 125, "rate": 94}
-    ]
-
-    salary_distribution = [
-        {"range": "3-5 LPA", "count": 28},
-        {"range": "5-8 LPA", "count": 54},
-        {"range": "8-12 LPA", "count": 32},
-        {"range": "12-16 LPA", "count": 18},
-        {"range": "16+ LPA", "count": 8}
-    ]
-
-    popular_skills = [
-        {"skill": "Python", "demand": 92},
-        {"skill": "Data Structures", "demand": 88},
-        {"skill": "React", "demand": 84},
-        {"skill": "SQL", "demand": 80},
-        {"skill": "Java", "demand": 76},
-        {"skill": "Machine Learning", "demand": 70}
-    ]
-
     return jsonify({
         "status": "success",
-        "total_students": total_students,
-        "total_predictions": total_predictions,
-        "avg_placement_score": avg_prob,
-        "top_career_recommendation": "Software Developer",
-        "placement_trends": placement_trends,
-        "salary_distribution": salary_distribution,
-        "popular_skills": popular_skills,
-        "recent_predictions": prediction_history,
+        "total_students": len([u for u in users_db if u.get('role') == 'student']) + 185,
+        "total_predictions": len(prediction_history) + 420,
         "registered_users": users_db
     })
 
 
-# Static assets & SPA Catch-All Routing Handler
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def serve_frontend(path):
-    if path.startswith('api/'):
-        return jsonify({"error": "API route not found"}), 404
-    
-    target_file = os.path.join(app.static_folder, path)
-    if path != "" and os.path.exists(target_file):
-        return send_from_directory(app.static_folder, path)
-    else:
-        index_file = os.path.join(app.static_folder, 'index.html')
-        if os.path.exists(index_file):
-            return send_from_directory(app.static_folder, 'index.html')
-        return jsonify({
-            "status": "online",
-            "system": "Placement Intelligence API",
-            "message": "Flask server running. React frontend static build not detected."
-        })
-
-
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    print(f"Starting Placement Intelligence Flask Server on port {port}...")
-    app.run(host='0.0.0.0', port=port, debug=False)
+    print("Starting Placement Intelligence Flask Server on port 5000...")
+    app.run(host='0.0.0.0', port=5000, debug=True)
