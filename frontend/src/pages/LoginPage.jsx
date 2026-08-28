@@ -1,14 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Mail, Lock, ArrowRight, BrainCircuit, ShieldCheck, Users, Building2, GraduationCap } from 'lucide-react';
 
-const LoginPage = ({ setActiveTab }) => {
+const LoginPage = ({ setActiveTab, initialRole }) => {
   const { login, loginWithGoogle, resetPassword, activeRole } = useAuth();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [selectedRole, setSelectedRole] = useState(activeRole || 'student');
+  const [selectedRole, setSelectedRole] = useState(initialRole || activeRole || 'student');
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (initialRole) {
+      setSelectedRole(initialRole);
+    }
+  }, [initialRole]);
 
   // Google Modal State
   const [showGoogleModal, setShowGoogleModal] = useState(false);
@@ -35,7 +41,7 @@ const LoginPage = ({ setActiveTab }) => {
       return;
     }
 
-    // STEP 9: Redirect according to authenticated user role
+    // Redirect according to authenticated user role
     const userRole = res.user?.role || selectedRole;
     redirectRole(userRole);
   };
@@ -69,7 +75,12 @@ const LoginPage = ({ setActiveTab }) => {
           <div className="inline-flex p-3 bg-gradient-to-tr from-blue-600 to-indigo-600 text-white rounded-2xl shadow-lg shadow-blue-500/30 mb-1">
             <BrainCircuit className="w-7 h-7" />
           </div>
-          <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white">Placement Intelligence Login</h2>
+          <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white">
+            {selectedRole === 'company' ? 'Company HR Portal Sign In' :
+             selectedRole === 'student' ? 'Student Portal Sign In' :
+             selectedRole === 'admin' ? 'Placement Admin System Login' :
+             'Placement Intelligence Login'}
+          </h2>
           <p className="text-xs text-gray-500 dark:text-slate-400">Multi-Role Authenticated Portal</p>
         </div>
 

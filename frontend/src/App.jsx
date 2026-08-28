@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import ErrorBoundary from './components/ErrorBoundary';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import Footer from './components/Footer';
@@ -23,9 +24,70 @@ import AdminDashboard from './pages/AdminDashboard';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 
+// Path to Tab State Mapper
+const mapPathToTab = (pathname) => {
+  const path = pathname.toLowerCase();
+  if (path === '/login') return { tab: 'login', role: 'student' };
+  if (path === '/student-login') return { tab: 'login', role: 'student' };
+  if (path === '/company-login') return { tab: 'login', role: 'company' };
+  if (path === '/admin-login') return { tab: 'login', role: 'admin' };
+  if (path === '/register' || path === '/signup') return { tab: 'register', role: 'student' };
+  if (path === '/student-register' || path === '/student-signup') return { tab: 'register', role: 'student' };
+  if (path === '/company-register' || path === '/company-signup') return { tab: 'register', role: 'company' };
+  if (path === '/dashboard' || path === '/student-dashboard') return { tab: 'dashboard' };
+  if (path === '/company-dashboard') return { tab: 'company_dashboard' };
+  if (path === '/trainer-dashboard') return { tab: 'trainer_dashboard' };
+  if (path === '/admin' || path === '/admin-dashboard') return { tab: 'admin' };
+  if (path === '/ats-checker') return { tab: 'ats_checker' };
+  if (path === '/jobs') return { tab: 'jobs' };
+  if (path === '/assessment') return { tab: 'assessment' };
+  if (path === '/verification-center') return { tab: 'verification_center' };
+  if (path === '/profile') return { tab: 'profile' };
+  return { tab: 'landing' };
+};
+
 function MainApp() {
-  const [activeTab, setActiveTab] = useState('landing');
+  const initialMap = mapPathToTab(window.location.pathname);
+  const [activeTab, setActiveTabState] = useState(initialMap.tab);
+  const [loginRolePreset, setLoginRolePreset] = useState(initialMap.role || 'student');
   const { isAuthenticated } = useAuth();
+
+  const setActiveTab = (tabId, rolePreset = null) => {
+    setActiveTabState(tabId);
+    if (rolePreset) setLoginRolePreset(rolePreset);
+    
+    // Update browser URL bar cleanly without page reload
+    let newPath = '/';
+    if (tabId === 'login') {
+      newPath = rolePreset === 'company' ? '/company-login' : '/login';
+    } else if (tabId === 'register') {
+      newPath = '/register';
+    } else if (tabId === 'dashboard') {
+      newPath = '/dashboard';
+    } else if (tabId === 'company_dashboard') {
+      newPath = '/company-dashboard';
+    } else if (tabId === 'trainer_dashboard') {
+      newPath = '/trainer-dashboard';
+    } else if (tabId === 'admin') {
+      newPath = '/admin';
+    } else if (tabId !== 'landing') {
+      newPath = `/${tabId.replace('_', '-')}`;
+    }
+    
+    if (window.location.pathname !== newPath) {
+      window.history.pushState({ tab: tabId }, '', newPath);
+    }
+  };
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const targetMap = mapPathToTab(window.location.pathname);
+      setActiveTabState(targetMap.tab);
+      if (targetMap.role) setLoginRolePreset(targetMap.role);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   const showSidebar = isAuthenticated && [
     'dashboard', 'ats_checker', 'predict', 'result', 'skill', 'career', 
@@ -87,9 +149,9 @@ function MainApp() {
       case 'admin_analytics':
         return <AdminDashboard setActiveTab={setActiveTab} />;
 
-      // Auth Routes
+      // Dedicated Auth Routes (/login, /register, /student-login, /company-login)
       case 'login':
-        return <LoginPage setActiveTab={setActiveTab} />;
+        return <LoginPage setActiveTab={setActiveTab} initialRole={loginRolePreset} />;
       case 'register':
         return <RegisterPage setActiveTab={setActiveTab} />;
       
@@ -127,8 +189,10 @@ function MainApp() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <MainApp />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <MainApp />
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
