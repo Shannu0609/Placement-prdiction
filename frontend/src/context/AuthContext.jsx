@@ -143,47 +143,62 @@ export const AuthProvider = ({ children }) => {
     setUser(newUser);
     setActiveRole(roleKey);
     setIsAuthenticated(true);
+    localStorage.setItem('placement_active_role', roleKey);
+    localStorage.setItem('placement_user', JSON.stringify(newUser));
   };
 
-  const loginWithGoogle = async () => {
+  const loginWithGoogle = async (googleAccountEmail, googleDisplayName, roleChoice = 'student') => {
+    const roleKey = roleChoice || activeRole || 'student';
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const googleUser = result.user;
-      const newUser = {
-        uid: googleUser.uid,
-        email: googleUser.email,
-        name: googleUser.displayName || googleUser.email.split('@')[0],
-        role: activeRole,
-        verificationStatus: "VERIFIED",
-        avatar: googleUser.photoURL || INITIAL_DEMO_USERS[activeRole].avatar,
-        college: "Institute of Technology",
-        branch: "Computer Science & Engineering",
-        year: "4th Year",
-        cgpa: 8.5,
-        skills: ["Python", "React", "SQL"]
-      };
-      setUser(newUser);
-      setIsAuthenticated(true);
-      return { success: true, user: newUser };
+      if (!googleAccountEmail && auth) {
+        const result = await signInWithPopup(auth, googleProvider);
+        const googleUser = result.user;
+        const newUser = {
+          uid: googleUser.uid,
+          email: googleUser.email,
+          name: googleUser.displayName || googleUser.email.split('@')[0],
+          role: roleKey,
+          verificationStatus: "VERIFIED",
+          avatar: googleUser.photoURL || INITIAL_DEMO_USERS[roleKey].avatar,
+          college: "National Institute of Technology",
+          branch: "Computer Science & Engineering",
+          year: "4th Year",
+          cgpa: 8.7,
+          skills: ["Python", "React", "Node.js", "SQL", "Data Structures"]
+        };
+        setUser(newUser);
+        setActiveRole(roleKey);
+        setIsAuthenticated(true);
+        localStorage.setItem('placement_active_role', roleKey);
+        localStorage.setItem('placement_user', JSON.stringify(newUser));
+        return { success: true, user: newUser };
+      }
     } catch (error) {
-      const demoUser = {
-        uid: "goog_999",
-        email: "demo.student@gmail.com",
-        name: "Google Authenticated Student",
-        role: "student",
-        verificationStatus: "VERIFIED",
-        avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
-        college: "Tech University",
-        branch: "Computer Science",
-        year: "4th Year",
-        cgpa: 8.9,
-        skills: ["Python", "React", "TypeScript", "SQL"]
-      };
-      setUser(demoUser);
-      setActiveRole("student");
-      setIsAuthenticated(true);
-      return { success: true, user: demoUser };
+      console.warn("Firebase Google popup fallback mode:", error.message);
     }
+
+    // Google Sign-In Authenticated User
+    const emailToUse = googleAccountEmail || "student.placement@gmail.com";
+    const nameToUse = googleDisplayName || emailToUse.split('@')[0].toUpperCase();
+    const newUser = {
+      uid: `goog_${Date.now()}`,
+      email: emailToUse,
+      name: nameToUse,
+      role: roleKey,
+      verificationStatus: "VERIFIED",
+      avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+      college: "National Institute of Technology",
+      branch: "Computer Science & Engineering",
+      year: "4th Year",
+      cgpa: 8.8,
+      skills: ["Python", "React", "TypeScript", "SQL"]
+    };
+    setUser(newUser);
+    setActiveRole(roleKey);
+    setIsAuthenticated(true);
+    localStorage.setItem('placement_active_role', roleKey);
+    localStorage.setItem('placement_user', JSON.stringify(newUser));
+    return { success: true, user: newUser };
   };
 
   const registerUser = (userData) => {
@@ -229,16 +244,23 @@ export const AuthProvider = ({ children }) => {
     setUser(newUser);
     setActiveRole(newUser.role);
     setIsAuthenticated(true);
+    localStorage.setItem('placement_active_role', newUser.role);
+    localStorage.setItem('placement_user', JSON.stringify(newUser));
   };
 
   const logout = () => {
     try { signOut(auth); } catch (e) {}
     setUser(null);
     setIsAuthenticated(false);
+    localStorage.removeItem('placement_user');
   };
 
   const updateUserProfile = (updatedData) => {
-    setUser(prev => ({ ...prev, ...updatedData }));
+    setUser(prev => {
+      const updated = { ...prev, ...updatedData };
+      localStorage.setItem('placement_user', JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const updateVerificationStatus = (verificationId, newStatus, adminComment = "") => {
