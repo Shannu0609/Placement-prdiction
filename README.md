@@ -1,168 +1,89 @@
-# 🎓 Placement Intelligence System Using Machine Learning
+# Placement Intelligence System
 
-> **"Predict Your Placement Potential and Build a Better Career Path"**
+> **"From Verified Student Profiles to Intelligent Company Matching."**
 
-[![Python Version](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
-[![React](https://img.shields.io/badge/React-18.0-blue.svg)](https://reactjs.org/)
-[![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-v4.0-38B2AC.svg)](https://tailwindcss.com/)
-[![Scikit-Learn](https://img.shields.io/badge/Machine--Learning-Scikit--Learn-F7931E.svg)](https://scikit-learn.org/)
-[![Flask API](https://img.shields.io/badge/Backend-Flask-000000.svg)](https://flask.palletsprojects.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-
-An AI-powered, production-grade EdTech platform that predicts student placement probability, estimates expected salary packages (CTC), recommends tailored tech career paths, and performs diagnostic skill-gap analysis using **Random Forest Machine Learning** algorithms.
+An enterprise-level placement and recruitment ecosystem connecting verified **Final-Year & Graduated Students** with corporate recruiters through **Educational Proof Verification**, **Resume Intelligence**, **Transparent Skill Matching**, **Proctored Multi-Section Assessments**, and **Data-Driven Recruitment Pipelines**.
 
 ---
 
-## 🌟 Key Features
+## 🌟 System Highlights & Core Architecture
 
-* **Placement Probability Predictor**: `RandomForestClassifier` calculates candidate probability (%) and classifies outcome:
-  * 🟢 **High Chance**: &gt; 75%
-  * 🟠 **Medium Chance**: 50% – 75%
-  * 🔴 **Low Chance**: &lt; 50%
-* **Salary CTC Package Predictor**: `RandomForestRegressor` forecasts realistic expected CTC range in LPA based on past placement benchmarks.
-* **Algorithmic Career Recommendation**: Smart skill-role matrix matching candidate profile against tech roles (*Software Developer, Data Analyst, Data Scientist, Frontend Dev, Backend Dev, QA Engineer, Cloud/DevOps*).
-* **Skill Gap Analysis Module**: Interactive radar chart diagnostic highlighting core strengths, weak areas, and generating step-by-step improvement roadmaps.
-* **Student Dashboard**: Unified hub tracking historical predictions, profile metrics, skill strength scores, and job market readiness.
-* **Admin Dashboard & Analytics**: Institutional analytics hub featuring KPI cards, placement trend area charts, salary distribution histograms, popular skill demand rankings, and registered user databases.
-* **Authentication**: Student sign-in and registration with college, branch, and academic year tracking.
-* **Interactive UI**: Responsive modern SaaS aesthetics, dark/light mode toggle, glassmorphism card designs, and confetti celebration effects.
+### 1. Educational Document Verification System
+- **Student Status**: Registration options for `Final-Year Student` and `Graduated Student`.
+- **Proof Document Upload**: Students upload College ID / Bonafide Certificates (for final-year candidates) or Degree Certificates (for graduates).
+- **Admin Verification Center**: Admin evaluates submissions with OCR text extraction assistance (extracting Name, Degree, College, Year) to **VERIFY**, **REJECT**, or **REQUEST RESUBMISSION** with comments.
+- **Verification Rule**: Only `VERIFIED` students can participate in company job drives and proctored assessments.
 
----
+### 2. Resume Intelligence & Profile Editor
+- **Multi-Section Resume Parsing**: Extracts Personal Info, Education, Technical Skills, Projects, Internships, Experience, Certifications, and Soft Skills.
+- **Editable Extracted Resume Profile**: Students can review and edit extracted skills and project entries before job matching.
+- **Resume Profile Strength**: Displays completeness percentage gauge (e.g. 82%).
+- **ATS Resume Checker**: Provides ATS Compatibility Score (0–100), missing industry keywords, formatting quality, and strengths/weaknesses breakdown.
 
-## 📸 Screenshots & UI Showcase
+### 3. Transparent Student–Company Skill Matching Engine
+- **Skill Normalization**: Automatically normalizes skill synonyms (`JS` = `JavaScript`, `Postgres` = `PostgreSQL`, `ML` = `Machine Learning`, etc.).
+- **Match Explanation**: Transparent **Profile Match Score** (e.g. 87% Match) detailing:
+  - Required Skills Matched
+  - Preferred Skills Matched
+  - CGPA Cutoff Eligibility
+  - Matched Skills List (✓)
+  - Missing / Preferred Skills List (△)
 
-### 1. Landing Page
-![Landing Page](screenshots/landing_page.png)
+### 4. Proctored Multi-Section Assessment Engine (Up to 150 Minutes)
+- **Configurable Test Duration**: Supports assessments up to **150 Minutes (2.5 Hours)** with countdown timer `02:30:00`.
+- **5 Evaluation Sections**:
+  1. **Coding**: Online code editor with language selection (Python, JavaScript, C++, Java) and test case runner.
+  2. **Aptitude**: Quantitative & Logical Reasoning MCQs.
+  3. **Communication**: Written & situational prompt evaluation.
+  4. **English / Verbal**: Grammar, vocabulary, and reading comprehension.
+  5. **English Speaking / Pronunciation**: Microphone audio recording for speech prompts.
+- **Proctored Test Controls**: Camera preview & connection status, Screen sharing request, Microphone recording, Fullscreen enforcement, Tab-switch warning logger, and auto-submit on timeout.
+- **Detailed Section Scoring**: Generates overall test score (e.g. 82/100) and section-wise breakdown.
 
-### 2. Student Dashboard & Quick Stats
-![Student Dashboard](screenshots/dashboard.png)
-
-### 3. Placement Prediction Form & Demo Presets
-![Prediction Form](screenshots/prediction_form.png)
-
-### 4. Prediction Results & CTC Range
-![Prediction Results](screenshots/prediction_result.png)
-
-### 5. Skill Gap Analysis & Radar Chart
-![Skill Gap Analysis](screenshots/skill_gap_analysis.png)
-
-### 6. Admin Analytics Dashboard
-![Admin Dashboard](screenshots/admin_dashboard.png)
-
----
-
-## 🏗 Repository Structure
-
-```text
-Placement-prdiction/
-├── frontend/                 # React + Vite + Tailwind CSS Source Code
-│   ├── src/
-│   │   ├── components/       # GaugeChart, RadarChart, Navbar, Sidebar, Footer
-│   │   ├── pages/            # LandingPage, Dashboard, PredictPage, ResultPage, etc.
-│   │   ├── context/          # Auth & Theme State Context
-│   │   ├── utils/            # API Communication Layer
-│   │   ├── App.jsx
-│   │   └── index.css
-│   ├── package.json
-│   └── vite.config.js
-├── backend/                  # Python Flask API & ML Pipeline
-│   ├── app.py                # Flask REST API Server
-│   ├── generate_data.py      # Dataset Synthesis Script (1,000 Records)
-│   └── train_models.py       # Random Forest Training Script
-├── datasets/                 # CSV Machine Learning Training Datasets
-│   ├── placement_dataset.csv
-│   └── salary_dataset.csv
-├── models/                   # Serialized Trained Model Pickles (.pkl)
-│   ├── placement_model.pkl
-│   └── salary_model.pkl
-├── api/                      # Modular API Backend Handler
-│   └── app.py
-├── static/                   # Production Static Assets
-├── templates/                # Server-rendered HTML Fallbacks
-├── screenshots/              # High-Resolution UI Screenshots
-├── requirements.txt          # Python Dependencies
-├── .gitignore                # Git Exclusions
-├── LICENSE                   # MIT License
-└── README.md                 # Project Documentation
-```
+### 5. Multi-Role Portals & Governance
+- **Student Portal**: Dashboard, ATS Resume Checker, Placement Predictor (Random Forest ML), Job Matches, Applications Tracker, Proctored Assessment, and Upskilling Paths.
+- **Company Portal**: Candidate Search with multi-filters (Branch, Skills, CGPA, ATS, Placement Score), talent shortlisting, customizable automated email composer, and job drive manager.
+- **Trainer Portal**: Roster monitoring, candidate deep-dive inspection, trainer feedback note submission, and batch preparation announcements.
+- **Admin Portal**: Institutional statistics, Company approvals, Student Verification Center, and Recharts analytics.
 
 ---
 
-## 🛠 Technology Stack
+## 🛠️ Technology Stack
 
-* **Frontend**: React 18, Vite, Tailwind CSS v4, Lucide Icons, Recharts, Canvas-Confetti
-* **Backend API**: Python 3.12, Flask, Flask-CORS
-* **Machine Learning**: Scikit-Learn (Random Forest), Pandas, NumPy, Joblib
-* **Data Storage**: CSV Datasets, In-Memory Persistent State / SQLite
+- **Frontend**: React 19, Vite, Tailwind CSS v4, Recharts, Lucide React Icons
+- **Backend & ML**: Python Flask (`backend/app.py` with Scikit-Learn `placement_model.pkl` & `salary_model.pkl`)
+- **Cloud & Deployment**: Firebase Authentication (Email/Password, Google Sign-In), Firestore Database, Firebase Hosting
 
 ---
 
-## ⚙️ Installation & Setup Instructions
+## 🚀 Local Quickstart Guide
 
-### Prerequisites
-* Python 3.9+
-* Node.js v18+ & npm
-
-### 1. Clone the Repository
-```bash
-git clone https://github.com/Shannu0609/Placement-prdiction.git
-cd Placement-prdiction
-```
-
-### 2. Backend Setup & Model Training
-```bash
-# Install Python dependencies
-pip install -r requirements.txt
-
-# Generate datasets & train Random Forest models
-cd backend
-python generate_data.py
-python train_models.py
-
-# Start Flask API server (Runs on http://localhost:5000)
-python app.py
-```
-
-### 3. Frontend Setup
-```bash
-# Open a new terminal tab and navigate to frontend directory
+### 1. Frontend Setup & Execution
+```powershell
 cd frontend
-
-# Install Node dependencies
 npm install
-
-# Start Vite development server (Runs on http://localhost:3000)
 npm run dev
 ```
+Open **[http://localhost:3000/](http://localhost:3000/)** in your browser.
 
-Open your browser and visit **`http://localhost:3000`**.
-
----
-
-## 📡 API Endpoints Summary
-
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `POST` | `/api/predict` | Computes placement probability % & category using `RandomForestClassifier` |
-| `POST` | `/api/salary-predict` | Predicts expected salary CTC range in LPA using `RandomForestRegressor` |
-| `POST` | `/api/career-recommend` | Algorithmic skill-role compatibility matching engine |
-| `POST` | `/api/skill-analysis` | Generates radar chart data, strengths, weak areas & improvement checklist |
-| `GET` | `/api/history` | Retrieves historical prediction logs |
-| `POST` | `/api/auth/login` | Student authentication endpoint |
-| `POST` | `/api/auth/register` | New student registration endpoint |
-| `GET` | `/api/admin/stats` | Aggregated institutional metrics & analytics |
+### 2. Backend ML Server Execution
+```powershell
+cd backend
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+python app.py
+```
+Flask server runs on `http://localhost:5000`.
 
 ---
 
-## 🚀 Future Enhancements
+## 📦 Production Firebase Hosting Deployment
 
-* 📄 **AI Resume Analyzer**: Automated resume parsing & ATS score calculation.
-* 🤖 **AI Mock Interview Coach**: Interactive voice/text interview simulator for technical & HR rounds.
-* 🏢 **Company Recommendation Engine**: Matching candidates to top recruiting companies based on skill benchmarks.
-* 📊 **Deep Placement Analytics**: Predictive campus placement drive scheduling & batch performance forecasting.
-
----
-
-## 📜 License
-
-Distributed under the MIT License. See `LICENSE` for more details.
+```powershell
+cd frontend
+npm run build
+npx firebase-tools login
+npx firebase-tools use placement-student-inteligence
+npx firebase-tools deploy --only hosting
+```

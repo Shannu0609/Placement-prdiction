@@ -15,6 +15,8 @@ import CareerRecommendPage from './pages/CareerRecommendPage';
 import HistoryPage from './pages/HistoryPage';
 import ProfilePage from './pages/ProfilePage';
 import JobsPage from './pages/JobsPage';
+import AssessmentPage from './pages/AssessmentPage';
+import VerificationCenterPage from './pages/VerificationCenterPage';
 import TrainerDashboard from './pages/TrainerDashboard';
 import CompanyDashboard from './pages/CompanyDashboard';
 import AdminDashboard from './pages/AdminDashboard';
@@ -23,11 +25,11 @@ import RegisterPage from './pages/RegisterPage';
 
 function MainApp() {
   const [activeTab, setActiveTab] = useState('landing');
-  const { isAuthenticated, activeRole } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   const showSidebar = isAuthenticated && [
     'dashboard', 'ats_checker', 'predict', 'result', 'skill', 'career', 
-    'history', 'profile', 'jobs',
+    'history', 'profile', 'jobs', 'assessment', 'verification_center',
     'trainer_dashboard', 'trainer_students', 'trainer_announcements', 'trainer_feedback',
     'company_dashboard', 'company_candidates', 'company_jobs', 'company_emails',
     'admin', 'admin_approvals', 'admin_users', 'admin_analytics'
@@ -57,6 +59,12 @@ function MainApp() {
         return <ProfilePage setActiveTab={setActiveTab} />;
       case 'jobs':
         return <JobsPage setActiveTab={setActiveTab} />;
+      case 'assessment':
+        return <AssessmentPage setActiveTab={setActiveTab} />;
+
+      // Admin Verification Center Route
+      case 'verification_center':
+        return <VerificationCenterPage />;
 
       // Trainer Routes
       case 'trainer_dashboard':
@@ -77,7 +85,7 @@ function MainApp() {
       case 'admin_approvals':
       case 'admin_users':
       case 'admin_analytics':
-        return <AdminDashboard />;
+        return <AdminDashboard setActiveTab={setActiveTab} />;
 
       // Auth Routes
       case 'login':

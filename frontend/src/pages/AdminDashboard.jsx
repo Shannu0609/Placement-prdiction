@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { 
   ShieldCheck, Users, Building2, Briefcase, Award, TrendingUp, 
-  BarChart3, PieChart, CheckCircle2, XCircle, Search, Filter, Check, Layers
+  BarChart3, PieChart, CheckCircle2, XCircle, Search, Filter, Check, Layers, FileText
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area } from 'recharts';
 import { useAuth } from '../context/AuthContext';
 
-export default function AdminDashboard() {
-  const { jobs, applications } = useAuth();
+export default function AdminDashboard({ setActiveTab }) {
+  const { jobs, applications, studentVerifications } = useAuth();
 
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveAdminTab] = useState('overview');
+
+  const pendingVerificationsCount = (studentVerifications || []).filter(v => v.status === 'PENDING').length;
 
   // Pending Company Approval Requests list
   const [companyApprovals, setCompanyApprovals] = useState([
@@ -95,23 +97,33 @@ export default function AdminDashboard() {
             </div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Admin System Ecosystem</h1>
             <p className="text-amber-200 text-xs sm:text-sm mt-1 max-w-xl">
-              Oversee multi-role users, approve corporate registrations, monitor campus drive applications, and analyze institutional placement trends.
+              Oversee multi-role users, approve corporate registrations, monitor student verification proofs, and analyze institutional trends.
             </p>
           </div>
 
-          <div className="flex items-center space-x-2 shrink-0">
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            {setActiveTab && (
+              <button
+                onClick={() => setActiveTab('verification_center')}
+                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-lg flex items-center space-x-1.5"
+              >
+                <FileText className="w-4 h-4" />
+                <span>Verification Center ({pendingVerificationsCount})</span>
+              </button>
+            )}
+
             <button
-              onClick={() => setActiveTab('overview')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                activeTab === 'overview' ? 'bg-amber-500 text-white shadow-lg' : 'bg-white/10 text-amber-200 hover:bg-white/20'
+              onClick={() => setActiveAdminTab('overview')}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+                activeTab === 'overview' ? 'bg-white/20 text-white border border-white/30' : 'bg-white/10 text-amber-200 hover:bg-white/20'
               }`}
             >
               Analytics Suite
             </button>
             <button
-              onClick={() => setActiveTab('approvals')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                activeTab === 'approvals' ? 'bg-amber-500 text-white shadow-lg' : 'bg-white/10 text-amber-200 hover:bg-white/20'
+              onClick={() => setActiveAdminTab('approvals')}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+                activeTab === 'approvals' ? 'bg-white/20 text-white border border-white/30' : 'bg-white/10 text-amber-200 hover:bg-white/20'
               }`}
             >
               Company Approvals ({companyApprovals.length})

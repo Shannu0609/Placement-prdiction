@@ -2,7 +2,7 @@ import React from 'react';
 import { 
   LayoutDashboard, Sparkles, History, Target, BarChart2, User, 
   ShieldCheck, LogOut, FileCheck, Briefcase, Users, Building2, 
-  Mail, Bell, Layers, CheckSquare
+  Mail, Bell, Layers, CheckSquare, Award
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -14,7 +14,8 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
       { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
       { id: 'ats_checker', label: 'ATS Resume Checker', icon: FileCheck, badge: 'ATS' },
       { id: 'predict', label: 'Placement Predictor', icon: Sparkles, badge: 'AI' },
-      { id: 'jobs', label: 'Browse Jobs & Apply', icon: Briefcase },
+      { id: 'jobs', label: 'Browse Jobs & Matches', icon: Briefcase },
+      { id: 'assessment', label: 'Proctored Assessment', icon: Award, badge: '150m' },
       { id: 'career', label: 'Career Paths', icon: Target },
       { id: 'skill', label: 'Skill Gap Analysis', icon: BarChart2 },
       { id: 'history', label: 'Prediction History', icon: History },
@@ -36,9 +37,9 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
     ],
     admin: [
       { id: 'admin', label: 'Admin Dashboard', icon: ShieldCheck, highlight: true },
+      { id: 'verification_center', label: 'Verification Center', icon: FileCheck, badge: 'Proofs' },
       { id: 'admin_approvals', label: 'Company Verification', icon: CheckSquare },
-      { id: 'admin_users', label: 'Manage Users', icon: Users },
-      { id: 'admin_analytics', label: 'Platform Analytics', icon: BarChart2 }
+      { id: 'admin_users', label: 'Manage Users', icon: Users }
     ]
   };
 
