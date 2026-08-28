@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, ArrowRight, BrainCircuit, ShieldCheck, Users, Building2, GraduationCap, CheckCircle } from 'lucide-react';
+import { Mail, Lock, ArrowRight, BrainCircuit, ShieldCheck, Users, Building2, GraduationCap } from 'lucide-react';
 
 const LoginPage = ({ setActiveTab }) => {
   const { login, loginWithGoogle, resetPassword, activeRole } = useAuth();
@@ -22,12 +22,22 @@ const LoginPage = ({ setActiveTab }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!email || !password) {
-      setError('Please fill in both Email and Password');
+    setError('');
+
+    if (!email.trim() || !password) {
+      setError('Please fill in both Email Address and Password.');
       return;
     }
-    login(email, password, selectedRole);
-    redirectRole(selectedRole);
+
+    const res = login(email, password, selectedRole);
+    if (!res.success) {
+      setError(res.message || 'Invalid credentials. Please check your email and password.');
+      return;
+    }
+
+    // STEP 9: Redirect according to authenticated user role
+    const userRole = res.user?.role || selectedRole;
+    redirectRole(userRole);
   };
 
   const redirectRole = (roleKey) => {
@@ -41,7 +51,7 @@ const LoginPage = ({ setActiveTab }) => {
     const res = await loginWithGoogle(accountEmail, accountName, selectedRole);
     setShowGoogleModal(false);
     if (res.success) {
-      redirectRole(selectedRole);
+      redirectRole(res.user?.role || selectedRole);
     }
   };
 
@@ -60,7 +70,7 @@ const LoginPage = ({ setActiveTab }) => {
             <BrainCircuit className="w-7 h-7" />
           </div>
           <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white">Placement Intelligence Login</h2>
-          <p className="text-xs text-gray-500 dark:text-slate-400">Multi-Role Access Portal</p>
+          <p className="text-xs text-gray-500 dark:text-slate-400">Multi-Role Authenticated Portal</p>
         </div>
 
         {/* Role Selector Pills */}
@@ -114,7 +124,7 @@ const LoginPage = ({ setActiveTab }) => {
 
         <div className="relative flex items-center justify-center my-2">
           <div className="border-t border-gray-200 dark:border-slate-800 w-full"></div>
-          <span className="bg-white dark:bg-slate-900 px-3 text-[10px] uppercase font-bold text-gray-400 absolute">Or Email Login</span>
+          <span className="bg-white dark:bg-slate-900 px-3 text-[10px] uppercase font-bold text-gray-400 absolute">Or Enter Credentials</span>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

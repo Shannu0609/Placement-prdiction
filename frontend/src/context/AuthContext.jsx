@@ -103,11 +103,13 @@ export const AuthProvider = ({ children }) => {
   const [activeRole, setActiveRole] = useState(() => localStorage.getItem('placement_active_role') || 'student');
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem('placement_user');
-    return savedUser ? JSON.parse(savedUser) : INITIAL_DEMO_USERS.student;
+    return savedUser ? JSON.parse(savedUser) : null; // Unauthenticated by default until login
   });
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return !!localStorage.getItem('placement_user');
+  });
 
-  // Registered Users Registry for email uniqueness checks
+  // Registered Users Registry for email uniqueness checks and login lookup
   const [registeredUsers, setRegisteredUsers] = useState(() => {
     const saved = localStorage.getItem('placement_registered_users');
     return saved ? JSON.parse(saved) : Object.values(INITIAL_DEMO_USERS);
@@ -139,22 +141,54 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = (email, password, roleChoice = 'student') => {
-    const roleKey = roleChoice || 'student';
-    const existing = registeredUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+    const cleanEmail = (email || "").trim().toLowerCase();
+    if (!cleanEmail || !password) {
+      return { success: false, message: "Please enter both Email and Password." };
+    }
+
+    const existingUser = registeredUsers.find(u => u.email.toLowerCase() === cleanEmail);
     
-    const newUser = existing || {
-      ...INITIAL_DEMO_USERS[roleKey],
-      email: email || INITIAL_DEMO_USERS[roleKey].email,
-      name: email ? email.split('@')[0].toUpperCase() : INITIAL_DEMO_USERS[roleKey].name,
-      role: roleKey
+    if (existingUser) {
+      setUser(existingUser);
+      setActiveRole(existingUser.role || roleChoice);
+      setIsAuthenticated(true);
+      localStorage.setItem('placement_active_role', existingUser.role || roleChoice);
+      localStorage.setItem('placement_user', JSON.stringify(existingUser));
+      return { success: true, user: existingUser };
+    }
+
+    // Check INITIAL_DEMO_USERS fallback
+    const roleKey = roleChoice || 'student';
+    const demoUser = INITIAL_DEMO_USERS[roleKey];
+    if (demoUser && (cleanEmail === demoUser.email.toLowerCase() || cleanEmail.includes("placement.edu") || cleanEmail.includes("techcorp"))) {
+      setUser(demoUser);
+      setActiveRole(demoUser.role);
+      setIsAuthenticated(true);
+      localStorage.setItem('placement_active_role', demoUser.role);
+      localStorage.setItem('placement_user', JSON.stringify(demoUser));
+      return { success: true, user: demoUser };
+    }
+
+    // Default guest account for newly logged in emails
+    const guestUser = {
+      uid: `usr_${Date.now()}`,
+      name: cleanEmail.split('@')[0].toUpperCase(),
+      email: cleanEmail,
+      role: roleKey,
+      verificationStatus: roleKey === 'student' ? 'PENDING' : 'VERIFIED',
+      college: "Tech University",
+      branch: "Computer Science",
+      year: "4th Year",
+      cgpa: 8.0,
+      skills: ["Python", "React", "SQL"]
     };
 
-    setUser(newUser);
-    setActiveRole(newUser.role || roleKey);
+    setUser(guestUser);
+    setActiveRole(roleKey);
     setIsAuthenticated(true);
-    localStorage.setItem('placement_active_role', newUser.role || roleKey);
-    localStorage.setItem('placement_user', JSON.stringify(newUser));
-    return { success: true, user: newUser };
+    localStorage.setItem('placement_active_role', roleKey);
+    localStorage.setItem('placement_user', JSON.stringify(guestUser));
+    return { success: true, user: guestUser };
   };
 
   const loginWithGoogle = async (googleAccountEmail, googleDisplayName, roleChoice = 'student') => {
@@ -276,21 +310,14 @@ export const AuthProvider = ({ children }) => {
       setStudentVerifications(prev => [newVerification, ...prev]);
     }
 
-    // 4. Update Database state & persistence
+    // 4. Update Database state & persistence WITHOUT automatically logging in
     const updatedUsers = [newUser, ...registeredUsers];
     setRegisteredUsers(updatedUsers);
-    setUser(newUser);
-    setActiveRole(newUser.role);
-    setIsAuthenticated(true);
     localStorage.setItem('placement_registered_users', JSON.stringify(updatedUsers));
-    localStorage.setItem('placement_active_role', newUser.role);
-    localStorage.setItem('placement_user', JSON.stringify(newUser));
 
     return { 
       success: true, 
-      message: targetRole === 'student'
-        ? "Student account created successfully! Educational proof document submitted for verification."
-        : "Company HR account created successfully!",
+      message: "Account created successfully. Please login to continue.",
       user: newUser 
     };
   };

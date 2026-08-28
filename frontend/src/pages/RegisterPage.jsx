@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { 
   User, Mail, School, BookOpen, Lock, ArrowRight, BrainCircuit, 
-  Calendar, Building2, Users, GraduationCap, Upload, FileText, CheckCircle2, AlertTriangle, ShieldCheck
+  Calendar, Building2, Users, GraduationCap, Upload, FileText, CheckCircle2, AlertTriangle
 } from 'lucide-react';
 
 const RegisterPage = ({ setActiveTab }) => {
@@ -25,9 +25,7 @@ const RegisterPage = ({ setActiveTab }) => {
     confirmPassword: ''
   });
 
-  const [documentFile, setDocumentFile] = useState(null);
   const [documentPreviewName, setDocumentPreviewName] = useState('');
-
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
@@ -39,7 +37,6 @@ const RegisterPage = ({ setActiveTab }) => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setDocumentFile(file);
       setDocumentPreviewName(file.name);
     }
   };
@@ -81,7 +78,7 @@ const RegisterPage = ({ setActiveTab }) => {
       return;
     }
 
-    // 2. Call registerUser
+    // 2. Execute Registration (Saves to DB without auto-login)
     const res = registerUser({
       ...formData,
       role,
@@ -96,19 +93,13 @@ const RegisterPage = ({ setActiveTab }) => {
       return;
     }
 
-    // 3. Handle Success
-    setSuccessMsg(res.message);
-    
-    // Automatic Redirect after brief delay
+    // 3. Display Exact Required Success Message
+    setSuccessMsg("Account created successfully. Please login to continue.");
+
+    // 4. STEP 6: Automatically redirect user to Login Page
     setTimeout(() => {
-      if (role === 'student') {
-        setActiveTab('dashboard');
-      } else if (role === 'trainer') {
-        setActiveTab('trainer_dashboard');
-      } else if (role === 'company') {
-        setActiveTab('company_dashboard');
-      }
-    }, 1800);
+      setActiveTab('login');
+    }, 1500);
   };
 
   const handleGoogleSignup = async () => {
@@ -173,7 +164,7 @@ const RegisterPage = ({ setActiveTab }) => {
             <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
             <div>
               <p className="font-bold">{successMsg}</p>
-              <p className="text-[10px] font-normal opacity-90">Redirecting to your dashboard...</p>
+              <p className="text-[10px] font-normal opacity-90">Redirecting to Login Page...</p>
             </div>
           </div>
         )}
