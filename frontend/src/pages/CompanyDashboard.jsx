@@ -1,18 +1,17 @@
 import React, { useState } from 'react';
 import { 
-  Building2, Search, Filter, Mail, CheckCircle2, Bookmark, BookmarkCheck,
-  Briefcase, Send, Plus, Award, UserCheck, ChevronRight, FileCheck, Star, ShieldCheck
+  Building2, Search, Mail, Bookmark, BookmarkCheck,
+  Plus, ShieldCheck, Send
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function CompanyDashboard() {
   const { 
     user, 
-    jobs, 
+    jobs = [], 
     createJobPosting, 
-    deleteJobPosting, 
     sendEmailToCandidate, 
-    savedCandidates, 
+    savedCandidates = [], 
     toggleSaveCandidate 
   } = useAuth();
 
@@ -100,19 +99,18 @@ export default function CompanyDashboard() {
   const [newJobSkills, setNewJobSkills] = useState("Python, React, SQL, Data Structures");
   const [newJobDesc, setNewJobDesc] = useState("We are looking for SDE-1 candidates with strong problem-solving skills.");
 
-  // Filter candidates logic
-  const filteredCandidates = candidatesList.filter(c => {
-    const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          c.skills.some(s => s.toLowerCase().includes(searchQuery.toLowerCase()));
+  // Safe Filter candidates logic
+  const filteredCandidates = (candidatesList || []).filter(c => {
+    const matchesSearch = (c.name || "").toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          (c.skills || []).some(s => s.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesBranch = selectedBranch === "all" || c.branch === selectedBranch;
-    const matchesCgpa = c.cgpa >= minCgpa;
-    const matchesAts = c.atsScore >= minAts;
-    const matchesPlacement = c.placementScore >= minPlacement;
+    const matchesCgpa = (c.cgpa || 0) >= minCgpa;
+    const matchesAts = (c.atsScore || 0) >= minAts;
+    const matchesPlacement = (c.placementScore || 0) >= minPlacement;
 
     return matchesSearch && matchesBranch && matchesCgpa && matchesAts && matchesPlacement;
   });
 
-  // Open Email Composer with Professional Pre-filled Template
   const openEmailComposer = (candidate, type = "interview") => {
     setSelectedCandidate(candidate);
     setTemplateType(type);
@@ -138,7 +136,7 @@ ${user?.name || 'TechCorp Global'}`);
       setEmailSubject(`Exclusive Job Opportunity: Software Engineer Position`);
       setEmailBody(`Dear ${candidate.name},
 
-We noticed your exceptional candidate profile on the Placement Intelligence System platform. We have an exciting opening that matches your skillset in ${candidate.skills.slice(0, 3).join(", ")}.
+We noticed your exceptional candidate profile on the Placement Intelligence System platform. We have an exciting opening that matches your skillset in ${(candidate.skills || []).slice(0, 3).join(", ")}.
 
 We invite you to apply directly to our job drive.
 
@@ -153,14 +151,16 @@ Recruitment Team, ${user?.name || 'TechCorp Global'}`);
     e.preventDefault();
     if (!selectedCandidate || !emailSubject || !emailBody) return;
 
-    sendEmailToCandidate({
-      candidateId: selectedCandidate.id,
-      candidateEmail: selectedCandidate.email,
-      candidateName: selectedCandidate.name,
-      subject: emailSubject,
-      body: emailBody,
-      templateType: templateType
-    });
+    if (sendEmailToCandidate) {
+      sendEmailToCandidate({
+        candidateId: selectedCandidate.id,
+        candidateEmail: selectedCandidate.email,
+        candidateName: selectedCandidate.name,
+        subject: emailSubject,
+        body: emailBody,
+        templateType: templateType
+      });
+    }
 
     setShowEmailModal(false);
     alert(`Professional email sent successfully to ${selectedCandidate.name} (${selectedCandidate.email})`);
@@ -168,19 +168,21 @@ Recruitment Team, ${user?.name || 'TechCorp Global'}`);
 
   const handleCreateJob = (e) => {
     e.preventDefault();
-    createJobPosting({
-      title: newJobTitle,
-      roleCategory: newJobRole,
-      branchEligibility: ["CSE", "IT", "ECE"],
-      minCgpa: parseFloat(newJobMinCgpa),
-      minAtsScore: 70,
-      minPlacementScore: 70,
-      requiredSkills: newJobSkills.split(',').map(s => s.trim()),
-      location: newJobLocation,
-      salaryRange: newJobSalary,
-      jobType: "Full-Time",
-      description: newJobDesc
-    });
+    if (createJobPosting) {
+      createJobPosting({
+        title: newJobTitle,
+        roleCategory: newJobRole,
+        branchEligibility: ["CSE", "IT", "ECE"],
+        minCgpa: parseFloat(newJobMinCgpa),
+        minAtsScore: 70,
+        minPlacementScore: 70,
+        requiredSkills: newJobSkills.split(',').map(s => s.trim()),
+        location: newJobLocation,
+        salaryRange: newJobSalary,
+        jobType: "Full-Time",
+        description: newJobDesc
+      });
+    }
 
     setShowJobModal(false);
     alert("New job posting published live for eligible candidates!");
@@ -293,8 +295,8 @@ Recruitment Team, ${user?.name || 'TechCorp Global'}`);
 
       {/* Main Grid: Filtered Candidates List */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-        {filteredCandidates.map((cand) => {
-          const isSaved = savedCandidates.includes(cand.id);
+        {(filteredCandidates || []).map((cand) => {
+          const isSaved = (savedCandidates || []).includes(cand.id);
           return (
             <div
               key={cand.id}
@@ -313,7 +315,7 @@ Recruitment Team, ${user?.name || 'TechCorp Global'}`);
                 </div>
 
                 <button
-                  onClick={() => toggleSaveCandidate(cand.id)}
+                  onClick={() => toggleSaveCandidate && toggleSaveCandidate(cand.id)}
                   className={`p-2 rounded-xl border transition-colors ${
                     isSaved
                       ? 'bg-emerald-50 dark:bg-emerald-950 text-emerald-600 border-emerald-300'
@@ -345,7 +347,7 @@ Recruitment Team, ${user?.name || 'TechCorp Global'}`);
               <div>
                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">Top Skills</span>
                 <div className="flex flex-wrap gap-1.5">
-                  {cand.skills.map((sk, idx) => (
+                  {(cand.skills || []).map((sk, idx) => (
                     <span key={idx} className="px-2 py-0.5 rounded-lg bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 text-[10px] font-semibold">
                       {sk}
                     </span>

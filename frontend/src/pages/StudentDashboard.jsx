@@ -1,17 +1,16 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { 
-  Sparkles, TrendingUp, Compass, Award, ArrowRight, CheckCircle2, 
-  AlertCircle, FileCheck, Briefcase, GraduationCap, Clock, BookOpen, Layers
+  Sparkles, TrendingUp, Award, FileCheck, Briefcase, GraduationCap, Clock, BookOpen
 } from 'lucide-react';
 import GaugeChart from '../components/GaugeChart';
 
 const StudentDashboard = ({ setActiveTab }) => {
-  const { user, applications, jobs, announcements, trainerFeedback } = useAuth();
+  const { user, applications = [], trainerFeedback = [] } = useAuth();
 
-  const userApps = applications.filter(a => a.studentId === (user?.uid || "std_101"));
+  const userApps = (applications || []).filter(a => a.studentId === (user?.uid || "std_101"));
 
-  const profileCompletion = user?.cgpa && user?.skills?.length ? 90 : 70;
+  const profileCompletion = user?.cgpa && (user?.skills?.length || 0) > 0 ? 90 : 70;
   const atsScore = user?.atsScore || 84;
   const readinessScore = user?.readinessScore || 86;
   const placementProb = user?.placementProbability || 92;
@@ -106,7 +105,7 @@ const StudentDashboard = ({ setActiveTab }) => {
             <Briefcase className="w-4 h-4 text-amber-500" />
           </div>
           <div className="text-3xl font-black text-amber-600 dark:text-amber-400">
-            {userApps.length} Drives
+            {(userApps?.length || 0)} Drives
           </div>
           <span className="text-[11px] text-gray-500 font-medium">1 Interview Scheduled</span>
         </div>
@@ -142,17 +141,17 @@ const StudentDashboard = ({ setActiveTab }) => {
           </div>
 
           {/* Trainer Feedback Banner */}
-          {trainerFeedback.length > 0 && (
+          {(trainerFeedback?.length || 0) > 0 && (
             <div className="glass-card p-5 rounded-3xl border border-purple-200 dark:border-purple-900/50 bg-purple-50/50 dark:bg-purple-950/20 space-y-2">
               <div className="flex items-center space-x-2 text-purple-700 dark:text-purple-300 font-bold text-xs">
                 <GraduationCap className="w-4 h-4" />
                 <span>Trainer Feedback Note</span>
               </div>
               <p className="text-xs text-gray-700 dark:text-slate-300 italic">
-                "{trainerFeedback[0].feedbackText}"
+                "{trainerFeedback[0]?.feedbackText}"
               </p>
               <span className="text-[10px] font-semibold text-purple-500 block text-right">
-                — {trainerFeedback[0].trainerName} ({trainerFeedback[0].category})
+                — {trainerFeedback[0]?.trainerName} ({trainerFeedback[0]?.category})
               </span>
             </div>
           )}
@@ -177,7 +176,7 @@ const StudentDashboard = ({ setActiveTab }) => {
             </div>
 
             <div className="space-y-3">
-              {userApps.map((app) => (
+              {(userApps || []).map((app) => (
                 <div key={app.id} className="p-4 rounded-2xl border border-gray-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
@@ -212,7 +211,7 @@ const StudentDashboard = ({ setActiveTab }) => {
             </h3>
 
             <div className="space-y-3">
-              {learningPaths.map((lp, idx) => (
+              {(learningPaths || []).map((lp, idx) => (
                 <div key={idx} className="p-3.5 rounded-2xl border border-gray-100 dark:border-slate-800 space-y-2">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-bold text-gray-800 dark:text-slate-200">{lp.title}</span>

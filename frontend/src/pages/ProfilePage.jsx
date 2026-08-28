@@ -1,22 +1,20 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { User, Save, CheckCircle, ShieldCheck, Edit3 } from 'lucide-react';
+import { User, ShieldCheck, CheckCircle, Save, Edit3 } from 'lucide-react';
 
 const ProfilePage = () => {
   const { user, updateUserProfile } = useAuth();
 
   const [formData, setFormData] = useState({
-    name: user?.name || 'Aarav Sharma',
-    email: user?.email || 'student@placement.edu',
-    college: user?.college || 'National Institute of Technology',
-    branch: user?.branch || 'Computer Science & Engineering',
-    year: user?.year || '4th Year',
-    studentStatus: user?.studentStatus || 'Final-Year Student',
+    name: user?.name || "Aarav Sharma",
+    email: user?.email || "student@placement.edu",
+    college: user?.college || "National Institute of Technology",
+    branch: user?.branch || "Computer Science & Engineering",
     cgpa: user?.cgpa || 8.7,
     skills: user?.skills || ["Python", "React", "Node.js", "SQL", "Data Structures"],
     projects: user?.projects || [
-      "Placement Intelligence System (React, ML)",
-      "Real-Time Analytics Dashboard (Node.js)"
+      "AI Placement Predictor Web Application",
+      "Distributed Microservices E-Commerce Platform"
     ],
     experience: user?.experience || "Software Engineer Intern - CloudTech (3 Months)"
   });
@@ -24,13 +22,16 @@ const ProfilePage = () => {
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [newProjectInput, setNewProjectInput] = useState('');
 
-  const verificationStatus = user?.verificationStatus || 'VERIFIED'; // PENDING, VERIFIED, REJECTED, RESUBMISSION_REQUIRED
+  const verificationStatus = user?.verificationStatus || 'VERIFIED';
+
+  const userSkillsList = formData.skills || [];
+  const userProjectsList = formData.projects || [];
 
   const profileStrength = Math.round(
     (formData.name ? 15 : 0) +
     (formData.cgpa ? 15 : 0) +
-    (formData.skills.length >= 3 ? 30 : 15) +
-    (formData.projects.length >= 1 ? 20 : 0) +
+    (userSkillsList.length >= 3 ? 30 : 15) +
+    (userProjectsList.length >= 1 ? 20 : 0) +
     (verificationStatus === 'VERIFIED' ? 20 : 0)
   );
 
@@ -41,11 +42,12 @@ const ProfilePage = () => {
 
   const handleSkillToggle = (sk) => {
     setFormData(prev => {
-      const exists = prev.skills.includes(sk);
+      const currSkills = prev.skills || [];
+      const exists = currSkills.includes(sk);
       if (exists) {
-        return { ...prev, skills: prev.skills.filter(s => s !== sk) };
+        return { ...prev, skills: currSkills.filter(s => s !== sk) };
       } else {
-        return { ...prev, skills: [...prev.skills, sk] };
+        return { ...prev, skills: [...currSkills, sk] };
       }
     });
   };
@@ -54,7 +56,7 @@ const ProfilePage = () => {
     if (!newProjectInput) return;
     setFormData(prev => ({
       ...prev,
-      projects: [...prev.projects, newProjectInput]
+      projects: [...(prev.projects || []), newProjectInput]
     }));
     setNewProjectInput('');
   };
@@ -181,7 +183,7 @@ const ProfilePage = () => {
           </label>
           <div className="flex flex-wrap gap-2">
             {availableSkills.map((sk) => {
-              const isSelected = formData.skills.includes(sk);
+              const isSelected = userSkillsList.includes(sk);
               return (
                 <button
                   type="button"
@@ -207,12 +209,12 @@ const ProfilePage = () => {
           </label>
           
           <div className="space-y-2">
-            {formData.projects.map((proj, idx) => (
+            {userProjectsList.map((proj, idx) => (
               <div key={idx} className="p-3 rounded-xl bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-xs font-medium text-gray-800 dark:text-slate-200 flex justify-between items-center">
                 <span>{proj}</span>
                 <button
                   type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, projects: prev.projects.filter((_, i) => i !== idx) }))}
+                  onClick={() => setFormData(prev => ({ ...prev, projects: (prev.projects || []).filter((_, i) => i !== idx) }))}
                   className="text-red-500 font-bold hover:underline"
                 >
                   Remove

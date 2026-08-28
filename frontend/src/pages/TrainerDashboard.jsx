@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { 
-  Users, Award, BarChart3, TrendingUp, Search, Filter, 
-  MessageSquare, Bell, Plus, CheckCircle, AlertTriangle, Eye, Send, Star, FileCheck, Sparkles
+  Users, Award, TrendingUp, Search, Filter, 
+  Bell, Star, FileCheck, Eye, Send
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function TrainerDashboard() {
-  const { user, announcements, createAnnouncement, trainerFeedback, addTrainerFeedback } = useAuth();
+  const { user, createAnnouncement, addTrainerFeedback } = useAuth();
 
   // Demo student batch roster assigned to trainer
   const [students, setStudents] = useState([
@@ -81,28 +81,32 @@ export default function TrainerDashboard() {
   const [annContent, setAnnContent] = useState("");
   const [annBatch, setAnnBatch] = useState("4th Year All Branches");
 
-  // Filtering student list
-  const filteredStudents = students.filter(s => {
-    const matchesSearch = s.name.toLowerCase().includes(searchQuery.toLowerCase()) || s.branch.toLowerCase().includes(searchQuery.toLowerCase());
+  // Filtering student list safely
+  const filteredStudents = (students || []).filter(s => {
+    const matchesSearch = (s.name || "").toLowerCase().includes(searchQuery.toLowerCase()) || (s.branch || "").toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === "all" || s.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  const avgReadiness = Math.round(students.reduce((acc, s) => acc + s.readinessScore, 0) / students.length);
-  const avgAts = Math.round(students.reduce((acc, s) => acc + s.atsScore, 0) / students.length);
-  const highChanceCount = students.filter(s => s.status === "High Chance").length;
+  const studentsList = students || [];
+  const totalCount = studentsList.length || 1;
+  const avgReadiness = Math.round(studentsList.reduce((acc, s) => acc + (s.readinessScore || 0), 0) / totalCount);
+  const avgAts = Math.round(studentsList.reduce((acc, s) => acc + (s.atsScore || 0), 0) / totalCount);
+  const highChanceCount = studentsList.filter(s => s.status === "High Chance").length;
 
   const handleSendFeedback = (e) => {
     e.preventDefault();
     if (!selectedStudent || !feedbackText) return;
 
-    addTrainerFeedback({
-      studentId: selectedStudent.id,
-      studentName: selectedStudent.name,
-      rating: parseFloat(feedbackRating),
-      category: feedbackCategory,
-      feedbackText: feedbackText
-    });
+    if (addTrainerFeedback) {
+      addTrainerFeedback({
+        studentId: selectedStudent.id,
+        studentName: selectedStudent.name,
+        rating: parseFloat(feedbackRating),
+        category: feedbackCategory,
+        feedbackText: feedbackText
+      });
+    }
 
     setFeedbackText("");
     alert(`Feedback note saved for ${selectedStudent.name}`);
@@ -112,12 +116,14 @@ export default function TrainerDashboard() {
     e.preventDefault();
     if (!annTitle || !annContent) return;
 
-    createAnnouncement({
-      title: annTitle,
-      content: annContent,
-      targetBatch: annBatch,
-      priority: "High"
-    });
+    if (createAnnouncement) {
+      createAnnouncement({
+        title: annTitle,
+        content: annContent,
+        targetBatch: annBatch,
+        priority: "High"
+      });
+    }
 
     setAnnTitle("");
     setAnnContent("");
@@ -157,7 +163,7 @@ export default function TrainerDashboard() {
         <div className="glass-card p-5 rounded-3xl border border-gray-200 dark:border-slate-800 flex items-center justify-between">
           <div>
             <span className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Assigned Students</span>
-            <h3 className="text-2xl font-black text-gray-900 dark:text-white mt-1">{students.length} Candidates</h3>
+            <h3 className="text-2xl font-black text-gray-900 dark:text-white mt-1">{(studentsList?.length || 0)} Candidates</h3>
             <span className="text-[11px] text-emerald-500 font-semibold">CSE & ECE Batches</span>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-purple-100 dark:bg-purple-950 text-purple-600 dark:text-purple-400 flex items-center justify-center">
@@ -236,7 +242,7 @@ export default function TrainerDashboard() {
 
             {/* Students Table / List */}
             <div className="space-y-2">
-              {filteredStudents.map((std) => (
+              {(filteredStudents || []).map((std) => (
                 <div
                   key={std.id}
                   onClick={() => setSelectedStudent(std)}
@@ -248,7 +254,7 @@ export default function TrainerDashboard() {
                 >
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center font-bold text-sm">
-                      {std.name[0]}
+                      {std.name ? std.name[0] : 'S'}
                     </div>
                     <div>
                       <h4 className="text-xs font-bold text-gray-900 dark:text-white">{std.name}</h4>
@@ -293,7 +299,7 @@ export default function TrainerDashboard() {
               <div className="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-slate-800">
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 rounded-2xl bg-purple-600 text-white flex items-center justify-center font-bold text-lg">
-                    {selectedStudent.name[0]}
+                    {selectedStudent.name ? selectedStudent.name[0] : 'S'}
                   </div>
                   <div>
                     <h3 className="text-sm font-bold text-gray-900 dark:text-white">{selectedStudent.name}</h3>
@@ -325,7 +331,7 @@ export default function TrainerDashboard() {
               <div>
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Student Technical Skills</span>
                 <div className="flex flex-wrap gap-1.5">
-                  {selectedStudent.skills.map((sk, idx) => (
+                  {(selectedStudent.skills || []).map((sk, idx) => (
                     <span key={idx} className="px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 text-[11px] font-semibold">
                       {sk}
                     </span>

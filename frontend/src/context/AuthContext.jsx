@@ -98,18 +98,37 @@ const DEFAULT_VERIFICATIONS = [
   }
 ];
 
+const DEFAULT_ANNOUNCEMENTS = [
+  {
+    id: "ann_1",
+    title: "Mock Technical Interviews Schedule",
+    content: "Mock technical coding interviews for CSE & IT 2026 batch will begin next Monday.",
+    author: "Dr. Rajesh Kumar",
+    date: "2026-08-25"
+  }
+];
+
+const DEFAULT_TRAINER_FEEDBACK = [
+  {
+    id: "fb_1",
+    studentId: "std_101",
+    trainerName: "Dr. Rajesh Kumar",
+    category: "Coding & DSA",
+    feedbackText: "Strong problem solving in arrays and dynamic programming. Focus on practicing graph traversal algorithms."
+  }
+];
+
 export const AuthProvider = ({ children }) => {
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('theme') !== 'light');
   const [activeRole, setActiveRole] = useState(() => localStorage.getItem('placement_active_role') || 'student');
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem('placement_user');
-    return savedUser ? JSON.parse(savedUser) : null; // Unauthenticated by default until login
+    return savedUser ? JSON.parse(savedUser) : null;
   });
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return !!localStorage.getItem('placement_user');
   });
 
-  // Registered Users Registry for email uniqueness checks and login lookup
   const [registeredUsers, setRegisteredUsers] = useState(() => {
     const saved = localStorage.getItem('placement_registered_users');
     return saved ? JSON.parse(saved) : Object.values(INITIAL_DEMO_USERS);
@@ -118,6 +137,8 @@ export const AuthProvider = ({ children }) => {
   const [jobs, setJobs] = useState(DEFAULT_JOBS);
   const [applications, setApplications] = useState(DEFAULT_APPLICATIONS);
   const [studentVerifications, setStudentVerifications] = useState(DEFAULT_VERIFICATIONS);
+  const [announcements, setAnnouncements] = useState(DEFAULT_ANNOUNCEMENTS);
+  const [trainerFeedback, setTrainerFeedback] = useState(DEFAULT_TRAINER_FEEDBACK);
 
   useEffect(() => {
     if (darkMode) {
@@ -146,7 +167,7 @@ export const AuthProvider = ({ children }) => {
       return { success: false, message: "Please enter both Email and Password." };
     }
 
-    const existingUser = registeredUsers.find(u => u.email.toLowerCase() === cleanEmail);
+    const existingUser = (registeredUsers || []).find(u => u.email?.toLowerCase() === cleanEmail);
     
     if (existingUser) {
       setUser(existingUser);
@@ -157,7 +178,6 @@ export const AuthProvider = ({ children }) => {
       return { success: true, user: existingUser };
     }
 
-    // Check INITIAL_DEMO_USERS fallback
     const roleKey = roleChoice || 'student';
     const demoUser = INITIAL_DEMO_USERS[roleKey];
     if (demoUser && (cleanEmail === demoUser.email.toLowerCase() || cleanEmail.includes("placement.edu") || cleanEmail.includes("techcorp"))) {
@@ -169,7 +189,6 @@ export const AuthProvider = ({ children }) => {
       return { success: true, user: demoUser };
     }
 
-    // Default guest account for newly logged in emails
     const guestUser = {
       uid: `usr_${Date.now()}`,
       name: cleanEmail.split('@')[0].toUpperCase(),
@@ -247,13 +266,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   const registerUser = (userData) => {
-    // 1. Validation & Duplicate Email Check
     const cleanEmail = (userData.email || "").trim().toLowerCase();
     if (!cleanEmail) {
       return { success: false, message: "Email address is required." };
     }
 
-    const isDuplicate = registeredUsers.some(u => u.email.toLowerCase() === cleanEmail);
+    const isDuplicate = (registeredUsers || []).some(u => u.email?.toLowerCase() === cleanEmail);
     if (isDuplicate) {
       return { 
         success: false, 
@@ -263,7 +281,6 @@ export const AuthProvider = ({ children }) => {
 
     const targetRole = userData.role || "student";
     
-    // 2. Build User Record based on Role
     const newUser = {
       uid: `usr_${Date.now()}`,
       name: userData.fullName || userData.companyName || "New User",
@@ -284,7 +301,6 @@ export const AuthProvider = ({ children }) => {
         : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
     };
 
-    // 3. Create Verification Submission for Student
     if (targetRole === 'student') {
       const newVerification = {
         id: `ver_${Date.now()}`,
@@ -307,11 +323,10 @@ export const AuthProvider = ({ children }) => {
           extractedYear: "2026"
         }
       };
-      setStudentVerifications(prev => [newVerification, ...prev]);
+      setStudentVerifications(prev => [newVerification, ...(prev || [])]);
     }
 
-    // 4. Update Database state & persistence WITHOUT automatically logging in
-    const updatedUsers = [newUser, ...registeredUsers];
+    const updatedUsers = [newUser, ...(registeredUsers || [])];
     setRegisteredUsers(updatedUsers);
     localStorage.setItem('placement_registered_users', JSON.stringify(updatedUsers));
 
@@ -338,7 +353,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const updateVerificationStatus = (verificationId, newStatus, adminComment = "") => {
-    setStudentVerifications(prev => prev.map(v => v.id === verificationId ? { ...v, status: newStatus, adminComment } : v));
+    setStudentVerifications(prev => (prev || []).map(v => v.id === verificationId ? { ...v, status: newStatus, adminComment } : v));
   };
 
   const createJobPosting = (jobData) => {
@@ -351,12 +366,12 @@ export const AuthProvider = ({ children }) => {
       postedDate: new Date().toISOString().split('T')[0],
       ...jobData
     };
-    setJobs(prev => [newJob, ...prev]);
+    setJobs(prev => [newJob, ...(prev || [])]);
     return newJob;
   };
 
   const applyForJob = (jobId) => {
-    const targetJob = jobs.find(j => j.id === jobId);
+    const targetJob = (jobs || []).find(j => j.id === jobId);
     if (!targetJob) return;
 
     const newApp = {
@@ -377,7 +392,7 @@ export const AuthProvider = ({ children }) => {
       appliedAt: new Date().toISOString().split('T')[0]
     };
 
-    setApplications(prev => [newApp, ...prev]);
+    setApplications(prev => [newApp, ...(prev || [])]);
     return newApp;
   };
 
@@ -389,18 +404,20 @@ export const AuthProvider = ({ children }) => {
       switchRole,
       user,
       isAuthenticated,
-      registeredUsers,
+      registeredUsers: registeredUsers || [],
       login,
       loginWithGoogle,
       registerUser,
       logout,
       updateUserProfile,
-      studentVerifications,
+      studentVerifications: studentVerifications || [],
       updateVerificationStatus,
-      jobs,
+      jobs: jobs || [],
       createJobPosting,
-      applications,
-      applyForJob
+      applications: applications || [],
+      applyForJob,
+      announcements: announcements || [],
+      trainerFeedback: trainerFeedback || []
     }}>
       {children}
     </AuthContext.Provider>

@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
 import { 
   ShieldCheck, Users, Building2, Briefcase, Award, TrendingUp, 
-  BarChart3, PieChart, CheckCircle2, XCircle, Search, Filter, Check, Layers, FileText
+  BarChart3, PieChart, Check, FileText
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area } from 'recharts';
 import { useAuth } from '../context/AuthContext';
 
 export default function AdminDashboard({ setActiveTab }) {
-  const { jobs, applications, studentVerifications } = useAuth();
+  const { jobs = [], applications = [], studentVerifications = [] } = useAuth();
 
   const [activeTab, setActiveAdminTab] = useState('overview');
 
-  const pendingVerificationsCount = (studentVerifications || []).filter(v => v.status === 'PENDING').length;
+  const pendingVerificationsCount = (studentVerifications || []).filter(v => v.status === 'PENDING').length || 0;
 
   // Pending Company Approval Requests list
   const [companyApprovals, setCompanyApprovals] = useState([
@@ -44,16 +44,16 @@ export default function AdminDashboard({ setActiveTab }) {
   ]);
 
   const handleApproveCompany = (companyId) => {
-    const target = companyApprovals.find(c => c.id === companyId);
+    const target = (companyApprovals || []).find(c => c.id === companyId);
     if (!target) return;
 
-    setCompanyApprovals(prev => prev.filter(c => c.id !== companyId));
-    setApprovedCompanies(prev => [...prev, { ...target, isVerified: true }]);
+    setCompanyApprovals(prev => (prev || []).filter(c => c.id !== companyId));
+    setApprovedCompanies(prev => [...(prev || []), { ...target, isVerified: true }]);
     alert(`${target.companyName} has been officially approved & verified for campus recruitment!`);
   };
 
   const handleRejectCompany = (companyId) => {
-    setCompanyApprovals(prev => prev.filter(c => c.id !== companyId));
+    setCompanyApprovals(prev => (prev || []).filter(c => c.id !== companyId));
   };
 
   // Analytics datasets
@@ -126,7 +126,7 @@ export default function AdminDashboard({ setActiveTab }) {
                 activeTab === 'approvals' ? 'bg-white/20 text-white border border-white/30' : 'bg-white/10 text-amber-200 hover:bg-white/20'
               }`}
             >
-              Company Approvals ({companyApprovals.length})
+              Company Approvals ({(companyApprovals?.length || 0)})
             </button>
           </div>
         </div>
@@ -157,7 +157,7 @@ export default function AdminDashboard({ setActiveTab }) {
             <span>COMPANIES</span>
             <Building2 className="w-4 h-4 text-emerald-500" />
           </div>
-          <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{approvedCompanies.length}</div>
+          <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{(approvedCompanies?.length || 0)}</div>
           <span className="text-[10px] text-emerald-500 font-semibold">Verified Corporate HR</span>
         </div>
 
@@ -166,7 +166,7 @@ export default function AdminDashboard({ setActiveTab }) {
             <span>ACTIVE JOBS</span>
             <Briefcase className="w-4 h-4 text-amber-500" />
           </div>
-          <div className="text-2xl font-black text-amber-600 dark:text-amber-400">{jobs.length}</div>
+          <div className="text-2xl font-black text-amber-600 dark:text-amber-400">{(jobs?.length || 0)}</div>
           <span className="text-[10px] text-amber-500 font-semibold">Live Campus Postings</span>
         </div>
 
@@ -175,7 +175,7 @@ export default function AdminDashboard({ setActiveTab }) {
             <span>APPLICATIONS</span>
             <TrendingUp className="w-4 h-4 text-indigo-500" />
           </div>
-          <div className="text-2xl font-black text-indigo-600 dark:text-indigo-400">{applications.length + 142}</div>
+          <div className="text-2xl font-black text-indigo-600 dark:text-indigo-400">{(applications?.length || 0) + 142}</div>
           <span className="text-[10px] text-indigo-500 font-semibold">Submitted Drive Apps</span>
         </div>
       </div>
@@ -279,11 +279,11 @@ export default function AdminDashboard({ setActiveTab }) {
               <span>Pending Company Verification Approvals</span>
             </h3>
 
-            {companyApprovals.length === 0 ? (
+            {(companyApprovals?.length || 0) === 0 ? (
               <p className="text-xs text-gray-400 py-4">No pending company registrations at this time.</p>
             ) : (
               <div className="space-y-3">
-                {companyApprovals.map((cmp) => (
+                {(companyApprovals || []).map((cmp) => (
                   <div key={cmp.id} className="p-4 rounded-2xl border border-amber-200 dark:border-amber-900/40 bg-amber-50/50 dark:bg-amber-950/20 flex items-center justify-between">
                     <div>
                       <h4 className="text-xs font-bold text-gray-900 dark:text-white">{cmp.companyName}</h4>
