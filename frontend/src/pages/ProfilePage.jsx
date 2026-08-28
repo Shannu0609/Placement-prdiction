@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { 
-  User, Mail, School, BookOpen, Calendar, Code, Save, CheckCircle, 
-  Sparkles, FileText, Upload, ShieldCheck, Edit3, Award, CheckCircle2, AlertTriangle
-} from 'lucide-react';
+import { User, Save, CheckCircle, ShieldCheck, Edit3 } from 'lucide-react';
 
 const ProfilePage = () => {
   const { user, updateUserProfile } = useAuth();
@@ -24,7 +21,6 @@ const ProfilePage = () => {
     experience: user?.experience || "Software Engineer Intern - CloudTech (3 Months)"
   });
 
-  const [docFile, setDocFile] = useState(null);
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [newProjectInput, setNewProjectInput] = useState('');
 

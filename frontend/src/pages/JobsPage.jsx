@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { 
-  Briefcase, CheckCircle2, AlertCircle, Clock, Calendar, 
-  MapPin, DollarSign, ArrowRight, Building2, Search, Filter, Sparkles, ShieldAlert, Award
+  Briefcase, Search, Filter, Sparkles, ShieldAlert
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { calculateJobMatch } from '../utils/matchEngine';

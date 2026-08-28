@@ -1,12 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  Clock, ShieldAlert, Camera, Mic, Monitor, CheckCircle2, 
-  AlertTriangle, Code2, BookOpen, MessageSquare, Volume2, ArrowRight, Play, FileCheck
+  ShieldAlert, Camera, Mic, Monitor, CheckCircle2, 
+  Code2, BookOpen, MessageSquare, Volume2, ArrowRight, Play, FileCheck
 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
 
 export default function AssessmentPage({ setActiveTab }) {
-  const { user } = useAuth();
 
   // Test State (Max 150 minutes = 9000 seconds)
   const [timeLeftSeconds, setTimeLeftSeconds] = useState(9000); // 2 hours 30 mins
@@ -26,15 +24,32 @@ export default function AssessmentPage({ setActiveTab }) {
   const [codeOutput, setCodeOutput] = useState('');
   const [codeRunning, setCodeRunning] = useState(false);
 
-  // Aptitude MCQs State
-  const [aptitudeAnswers, setAptitudeAnswers] = useState({});
-
   // Speaking Recording State
   const [isRecordingAudio, setIsRecordingAudio] = useState(false);
   const [audioRecorded, setAudioRecorded] = useState(false);
 
   // Final Results
   const [finalResults, setFinalResults] = useState(null);
+
+  const handleSubmitTest = useCallback(() => {
+    const overallScore = 86;
+    const results = {
+      overallScore,
+      sectionScores: {
+        coding: 52, // out of 60
+        aptitude: 18, // out of 20
+        communication: 8, // out of 10
+        verbal: 4, // out of 5
+        speaking: 4 // out of 5
+      },
+      timeTaken: `${Math.floor((9000 - timeLeftSeconds) / 60)} minutes`,
+      tabSwitches: tabSwitchCount,
+      proctoringStatus: cameraActive && screenShared ? "Verified Proctored" : "Standard Evaluated"
+    };
+
+    setFinalResults(results);
+    setIsSubmitted(true);
+  }, [timeLeftSeconds, tabSwitchCount, cameraActive, screenShared]);
 
   // Timer Effect
   useEffect(() => {
@@ -52,7 +67,7 @@ export default function AssessmentPage({ setActiveTab }) {
       }, 1000);
     }
     return () => clearInterval(timer);
-  }, [isTestStarted, isSubmitted, timeLeftSeconds]);
+  }, [isTestStarted, isSubmitted, timeLeftSeconds, handleSubmitTest]);
 
   // Tab switch listener for test integrity
   useEffect(() => {
@@ -68,9 +83,9 @@ export default function AssessmentPage({ setActiveTab }) {
   // Request Permissions
   const requestCameraPermission = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      await navigator.mediaDevices.getUserMedia({ video: true });
       setCameraActive(true);
-    } catch (err) {
+    } catch (_e) {
       setCameraActive(true); // Fallback simulated permission
     }
   };
@@ -81,7 +96,7 @@ export default function AssessmentPage({ setActiveTab }) {
         await navigator.mediaDevices.getDisplayMedia({ video: true });
       }
       setScreenShared(true);
-    } catch (err) {
+    } catch (_e) {
       setScreenShared(true);
     }
   };
@@ -90,7 +105,7 @@ export default function AssessmentPage({ setActiveTab }) {
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
       setMicActive(true);
-    } catch (err) {
+    } catch (_e) {
       setMicActive(true);
     }
   };
@@ -115,26 +130,6 @@ export default function AssessmentPage({ setActiveTab }) {
         setAudioRecorded(true);
       }, 5000);
     }
-  };
-
-  const handleSubmitTest = () => {
-    const overallScore = 86;
-    const results = {
-      overallScore,
-      sectionScores: {
-        coding: 52, // out of 60
-        aptitude: 18, // out of 20
-        communication: 8, // out of 10
-        verbal: 4, // out of 5
-        speaking: 4 // out of 5
-      },
-      timeTaken: `${Math.floor((9000 - timeLeftSeconds) / 60)} minutes`,
-      tabSwitches: tabSwitchCount,
-      proctoringStatus: cameraActive && screenShared ? "Verified Proctored" : "Standard Evaluated"
-    };
-
-    setFinalResults(results);
-    setIsSubmitted(true);
   };
 
   const formatTime = (seconds) => {
