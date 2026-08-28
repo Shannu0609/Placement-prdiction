@@ -4,7 +4,6 @@ import {
   googleProvider, 
   signInWithPopup, 
   signOut, 
-  sendPasswordResetEmail,
   INITIAL_DEMO_USERS 
 } from '../firebase';
 
@@ -149,8 +148,11 @@ export const AuthProvider = ({ children }) => {
 
   const loginWithGoogle = async (googleAccountEmail, googleDisplayName, roleChoice = 'student') => {
     const roleKey = roleChoice || activeRole || 'student';
-    try {
-      if (!googleAccountEmail && auth) {
+    const apiKey = import.meta.env.VITE_FIREBASE_API_KEY || "";
+    
+    // Attempt real Firebase Google Auth Popup ONLY if production API Key is configured
+    if (!googleAccountEmail && apiKey && !apiKey.startsWith("AIzaSyDemo") && auth) {
+      try {
         const result = await signInWithPopup(auth, googleProvider);
         const googleUser = result.user;
         const newUser = {
@@ -172,14 +174,14 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('placement_active_role', roleKey);
         localStorage.setItem('placement_user', JSON.stringify(newUser));
         return { success: true, user: newUser };
+      } catch (error) {
+        console.warn("Firebase Google popup error fallback:", error.message);
       }
-    } catch (error) {
-      console.warn("Firebase Google popup fallback mode:", error.message);
     }
 
-    // Google Sign-In Authenticated User
+    // Google Sign-In In-App Account Authentication
     const emailToUse = googleAccountEmail || "student.placement@gmail.com";
-    const nameToUse = googleDisplayName || emailToUse.split('@')[0].toUpperCase();
+    const nameToUse = googleDisplayName || (emailToUse ? emailToUse.split('@')[0].toUpperCase() : "GOOGLE CANDIDATE");
     const newUser = {
       uid: `goog_${Date.now()}`,
       email: emailToUse,
